@@ -43,6 +43,8 @@ Depois: `git add skills/<nome> && git commit && git push`.
 
 ## Skills
 
+As skills do Obsidian (`obsidian-cli`, `obsidian-markdown`) **não** ficam aqui: vivem como skills de projeto dentro do vault Second Brain (`.claude/skills/` e `.agents/skills/`), e só carregam quando o agente está aberto no vault.
+
 | Skill | Descrição | Origem |
 |---|---|---|
 | `caveman` | Ultra-compressed communication mode that cuts output tokens while keeping technical accuracy. Levels: lite, full, ultra and the wenyan variants.… | [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) |
@@ -61,8 +63,6 @@ Depois: `git add skills/<nome> && git commit && git push`.
 | `karpathy-guidelines` | Behavioral guidelines to reduce common LLM coding mistakes. Use when writing, reviewing, or refactoring code to avoid overcomplication, make surgic… | [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) |
 | `llm-wiki` | Karpathy's LLM Wiki: build/query interlinked markdown KB. | [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent) |
 | `multica` | O board do Multica pela CLI — sub-issue com a ORDEM DE EXECUÇÃO em `--stage`, propor vs disparar outro agente, e o próprio card com `--no-start`. U… | local (menos-juros) |
-| `obsidian-cli` | Opera um vault Obsidian pela CLI `obsidian` — ler, criar, buscar, e consultar o GRAFO (`backlinks`, `links`, `orphans`, `unresolved`). Exige o app… | local (menos-juros) |
-| `obsidian-markdown` | Create and edit Obsidian Flavored Markdown with wikilinks, embeds, callouts, properties, and other Obsidian-specific syntax. Use when working with… | local (menos-juros) |
 | `prototype` | Build a throwaway prototype to answer a design question. Use when the user wants to sanity-check whether a state model or logic feels right, or exp… | local (menos-juros) |
 | `research` | Investigate a question against high-trust primary sources and capture the findings as a Markdown file in the repo. Use when the user wants a topic… | local (menos-juros) |
 | `resolving-merge-conflicts` | Use when you need to resolve an in-progress git merge/rebase conflict. | local (menos-juros) |
