@@ -43,7 +43,7 @@ Depois: `git add skills/<nome> && git commit && git push`.
 
 ## Skills
 
-As skills do vault (`second-brain`, `obsidian-cli`, `obsidian-markdown`) **não** ficam aqui: vivem como skills de projeto dentro do vault Second Brain (`.claude/skills/` e `.agents/skills/`), e só carregam quando o agente está aberto no vault.
+As skills do Obsidian (`obsidian-cli`, `obsidian-markdown`) **não** ficam aqui: vivem como skills de projeto dentro do vault Second Brain (`.claude/skills/` e `.agents/skills/`), e só carregam quando o agente está aberto no vault.
 
 | Skill | Descrição | Origem |
 |---|---|---|
@@ -66,6 +66,7 @@ As skills do vault (`second-brain`, `obsidian-cli`, `obsidian-markdown`) **não*
 | `prototype` | Build a throwaway prototype to answer a design question. Use when the user wants to sanity-check whether a state model or logic feels right, or exp… | local (menos-juros) |
 | `research` | Investigate a question against high-trust primary sources and capture the findings as a Markdown file in the repo. Use when the user wants a topic… | local (menos-juros) |
 | `resolving-merge-conflicts` | Use when you need to resolve an in-progress git merge/rebase conflict. | local (menos-juros) |
+| `second-brain` | Opera o vault Obsidian "Second Brain" do Flávio: onde cada coisa mora, a governança em Memoria/Contratos e o protocolo de memória compartilhada que todo agente segue. | local |
 | `tdd` | Test-driven development. Use when the user wants to build features or fix bugs test-first, mentions "red-green-refactor", or wants integration tests. | local (menos-juros) |
 | `teach` | Teach the user a new skill or concept, within this workspace. | local (menos-juros) |
 | `to-map` | Plan a huge chunk of work (more than one agent session can hold) as a shared map of decision tickets on your issue tracker, and resolve them one at… | local (menos-juros) |
