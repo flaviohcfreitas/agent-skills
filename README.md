@@ -43,7 +43,7 @@ Depois: `git add skills/<nome> && git commit && git push`.
 
 ## Skills
 
-As skills do Obsidian (`obsidian-cli`, `obsidian-markdown`) **não** ficam aqui: vivem como skills de projeto dentro do vault Second Brain (`.claude/skills/` e `.agents/skills/`), e só carregam quando o agente está aberto no vault.
+As skills do vault (`second-brain`, `obsidian-cli`, `obsidian-markdown`) **não** ficam aqui: vivem como skills de projeto dentro do vault Second Brain (`.claude/skills/` e `.agents/skills/`), e só carregam quando o agente está aberto no vault.
 
 | Skill | Descrição | Origem |
 |---|---|---|
