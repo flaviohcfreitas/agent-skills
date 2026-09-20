@@ -1,0 +1,53 @@
+{
+  "version": 3,
+  "skills": {
+    "karpathy-guidelines": {
+      "source": "multica-ai/andrej-karpathy-skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/multica-ai/andrej-karpathy-skills.git",
+      "skillPath": "skills/karpathy-guidelines/SKILL.md",
+      "skillFolderHash": "e119339197d600aa39a24fd7a95c946800c9c949",
+      "pluginName": "andrej-karpathy-skills",
+      "installedAt": "2026-09-20T14:17:49.815Z",
+      "updatedAt": "2026-09-20T14:17:49.815Z"
+    },
+    "triage": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/mattpocock/skills.git",
+      "skillPath": "skills/engineering/triage/SKILL.md",
+      "skillFolderHash": "95fa21bf236993cd9af25bd3670476c17fdb95a4",
+      "pluginName": "mattpocock-skills",
+      "installedAt": "2026-09-20T14:18:25.855Z",
+      "updatedAt": "2026-09-20T14:18:25.855Z"
+    },
+    "caveman": {
+      "source": "JuliusBrussee/caveman",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/JuliusBrussee/caveman.git",
+      "skillPath": "skills/caveman/SKILL.md",
+      "skillFolderHash": "02b646b008b9d1e5b67e5f65fab56fd7073d9212",
+      "installedAt": "2026-09-20T14:18:28.292Z",
+      "updatedAt": "2026-09-20T14:18:28.292Z"
+    },
+    "gauntlet-loop": {
+      "source": "robonuggets/gauntlet-loop",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/robonuggets/gauntlet-loop.git",
+      "skillPath": ".claude/skills/gauntlet-loop/SKILL.md",
+      "skillFolderHash": "1e764a30e3673f7b3edd1511271443a77e59f6fb",
+      "installedAt": "2026-09-20T14:18:30.103Z",
+      "updatedAt": "2026-09-20T14:18:30.103Z"
+    },
+    "llm-wiki": {
+      "source": "NousResearch/hermes-agent",
+      "sourceType": "github",
+      "sourceUrl": "https://github.com/NousResearch/hermes-agent.git",
+      "skillPath": "skills/research/llm-wiki/SKILL.md",
+      "skillFolderHash": "0051b4298f0b840fbeec290c1706a58676940fa7",
+      "installedAt": "2026-09-20T14:18:37.727Z",
+      "updatedAt": "2026-09-20T14:18:37.727Z"
+    }
+  },
+  "dismissed": {}
+}

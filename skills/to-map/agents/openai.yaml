@@ -1,0 +1,13 @@
+# O espelho, pro Codex, do `disable-model-invocation: true` do SKILL.md.
+#
+# Sem este arquivo o Codex trata a skill como implicitamente invocável, e a `to-map`
+# passa a ser escolhido pelo modelo — o oposto do contrato dele: é o fluxo mais pesado
+# do conjunto, e quem decide pagá-lo é o humano digitando `/to-map`.
+#
+# Vem do upstream (mattpocock/skills). A vendorização deste repo não trouxe os
+# `agents/openai.yaml` de nenhuma skill; este é o dela, reposto.
+interface:
+  display_name: "Map"
+  short_description: "Map a large effort as decision tickets"
+policy:
+  allow_implicit_invocation: false
