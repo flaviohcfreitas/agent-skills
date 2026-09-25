@@ -133,8 +133,28 @@ quatro da skill `agents`:
 | **construir** — código e o teste dele, a partir de spec fechada | `Implement` | Grok 4.7 |
 | **conferir** — revisar o que um `Implement` entregou | `Monitoring` | GPT-6 Sol |
 
-- **Construção sempre ganha um irmão de conferência:** o ticket `Implement` na onda N e o `Monitoring` do
-  mesmo trabalho na onda N+1, como subtickets do mesmo pai.
+- **Construção nunca nasce sozinha.** Todo trabalho que tem um `Implement` vira um pai com os subtickets
+  abaixo, cada um no seu `--stage` — a onda seguinte só abre quando a anterior fechou. Cada subticket
+  nomeia a skill que o agente carrega; é a skill que diz como o trabalho se faz.
+
+  | Onda | Subticket | Skill | `--assignee` | Quando entra |
+  |---|---|---|---|---|
+  | 1 | `Diagnóstico` — reproduzir e achar a causa | `diagnosing-bugs` | `Implement` | bug de causa desconhecida |
+  | 2 | `Teste` — o teste que falha | `tdd` | `Implement` | a fatia muda comportamento: regra, cálculo, API, fluxo |
+  | 3 | `Implementar` — fazer o teste passar, `verificar` e juiz antes de `in_review` | `implement` | `Implement` | sempre |
+  | 4 | `Code review` — o diff contra a spec | `code-review` | `Monitoring` | sempre. Se a fatia edita skill ou `CLAUDE.md`, a revisão aplica também a `writing-for-agents` |
+  | 4 | `Revisão de UI` — a tela contra o design system | `impeccable` | `Monitoring` | a fatia tem tela |
+  | 4 | `E2E` — o spec Cypress do fluxo, rodado no CRM local ou no `pr-<N>` | `cypress` | `Implement` | fluxo de UI que a `criticidade` marca crítico |
+  | 4 | `Teste do Ralph` — teste exploratório do PR, pelo webhook | `bot-test` | `Implement`, que envia e comenta o veredito | a fatia tem tela: pega o que o `E2E` não especificou |
+  | 4 | `Glossário e ADR` — o termo novo ou a decisão difícil de reverter | `domain-modeling` | `Reach` | a fatia cria termo de domínio ou toma decisão sem `Ctrl+Z` |
+  | 5 | `Evidências` — o dossiê: cenários, print, checklist, roteiro manual | `evidencias` | `Implement` | há tela ou há check humano |
+  | 6 | `Check humano` — seguir o roteiro e decidir | — | o **humano**, pelo nome de membro | fluxo crítico, tela, ou o que não tem `Ctrl+Z`: migration, dado de produção |
+
+  O título leva a onda e o tipo: `[S3] Implementar: <fatia>`. Subticket que não entra não nasce, e as
+  ondas renumeram sem buraco; o corpo do `Implementar` diz o que ficou de fora e por quê. **Pergunta de
+  desenho aberta** (estado, tela) não entra aqui: o `prototype` vem **antes** da spec, e a spec só nasce
+  depois que você escolhe. O check humano é atribuído a pessoa, não a agente: ele não dispara run e
+  **segura o pai** até você fechar.
 - **Ticket que não cabe num papel só está grande demais** — quebre antes de atribuir.
 - **Confira que o agente existe** antes de atribuir (`multica agent list`): nome que não existe falha com
   `invalid agent id`. O elenco por skill de 18/09/2026 foi apagado; os quatro papéis existem desde
