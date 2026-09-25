@@ -1,17 +1,19 @@
 ---
-name: agents
+name: agent-models
 description: Os modelos do Cursor nos quatro papéis — scout, reach, implement, monitoring — e como delegar a subagentes sem sair do Cursor. Use ao delegar, ao escolher o modelo de um subagente, ou ao revisar o que ele entregou.
 ---
 
-# agents — os modelos do Cursor
+# agent-models — os modelos do Cursor
 
 Mantenha a decisão e a integração com o agente principal. Delegue quando houver uma frente independente, e dê a cada subagente **um** papel. O papel decide o modelo; a tarefa decide o papel.
 
 ## Os quatro papéis
 
+O que cada papel faz, como um alimenta o seguinte e de quem é cada skill estão no `agent.md` (global, e na raiz do projeto). Esta skill diz **com qual modelo** cada papel roda neste harness.
+
 | Papel | O que faz | Modelo |
 | --- | --- | --- |
-| **scout** | varredura barata e em paralelo: localizar, inventariar, coletar. Só leitura | Composer 2.5 |
+| **scout** | busca e junta, barato e em paralelo, a informação que o reach precisa: localizar, inventariar, coletar. Só leitura | Composer 2.5 |
 | **implement** | executa a tarefa que o reach planejou, com arquivos exclusivos. Não decide o caminho | Composer 2.5 |
 | **monitoring** | confere o que o implement entregou, pelo diff e pela verificação. Não conserta | Grok 4.7 |
 | **reach** | plano, arquitetura, ambiguidade central: a visão que o implement vai executar | Grok 4.7 |

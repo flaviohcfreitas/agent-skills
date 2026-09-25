@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # orchestri — o melhor modelo de cada papel, em qualquer harness
 
-**Ser chamada é a autorização para sair do harness.** Sem esta skill, o agente fica na skill `agents` do próprio harness e varia só entre os modelos dele. Com ela, cada papel vai para o harness onde está o modelo daquele papel.
+**Ser chamada é a autorização para sair do harness.** Sem esta skill, o agente fica na skill `agent-models` do próprio harness e varia só entre os modelos dele. Com ela, cada papel vai para o harness onde está o modelo daquele papel.
 
 Mantenha a decisão e a integração com o agente principal. Dê a cada frente **um** papel; o papel decide o modelo, e o modelo decide o harness.
 
@@ -55,9 +55,9 @@ scout ──► reach ──► implement ──► monitoring
 | **implement** | executa o plano do reach, com arquivos exclusivos | Grok 4.7 | Cursor | Composer 2.5 |
 | **monitoring** | confere o implement pelo diff e pela verificação. Não conserta | GPT-6 Sol, `max` | Codex | GPT-6 Astra |
 
-A coluna **Se o modelo falhar** fica no mesmo harness. O harness inteiro fora do ar: faça o papel na skill `agents` do harness atual e diga isso.
+A coluna **Se o modelo falhar** fica no mesmo harness. O harness inteiro fora do ar: faça o papel na skill `agent-models` do harness atual e diga isso.
 
-O que cada harness tem por papel, e como chamar lá dentro, vive na skill `agents` daquele harness. Modelo novo se troca lá **e** aqui.
+O que cada harness tem por papel, e como chamar lá dentro, vive na skill `agent-models` daquele harness. Modelo novo se troca lá **e** aqui.
 
 - **Pague inteligência no reach e no monitoring, não no scout.**
 - **monitoring é de outro provedor que o implement.** Dois modelos do mesmo provedor erram junto.

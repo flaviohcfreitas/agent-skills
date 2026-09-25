@@ -59,4 +59,24 @@ done
 for agent in codex cursor; do
   link_skill "$TARGET_HOME/.agents/skills/decision-gate" "$TARGET_HOME/.$agent/skills/decision-gate"
 done
+# Os subagentes de papel (scout, reach, implement, monitoring) do Claude Code.
+for agent_file in "$REPO"/claude/agents/*.md; do
+  [ -f "$agent_file" ] || continue
+  target="$TARGET_HOME/.claude/agents/$(basename "$agent_file")"
+  if [ -L "$target" ] && [ "$(readlink "$target")" = "$agent_file" ]; then continue; fi
+  if [ -e "$target" ]; then echo "Conflito: $target já existe; preservado." >&2; continue; fi
+  mkdir -p "$(dirname "$target")"
+  ln -s "$agent_file" "$target"
+  echo "$target -> $agent_file"
+done
+# O agent.md — o conceito dos papéis — é a instrução global do Claude Code e do Codex.
+# Arquivo vazio no lugar dá vez ao link; arquivo com conteúdo é preservado.
+for target in "$TARGET_HOME/.claude/CLAUDE.md" "$TARGET_HOME/.codex/AGENTS.md"; do
+  if [ -L "$target" ] && [ "$(readlink "$target")" = "$REPO/agent.md" ]; then continue; fi
+  if [ -f "$target" ] && [ ! -L "$target" ] && [ ! -s "$target" ]; then rm "$target"; fi
+  if [ -e "$target" ]; then echo "Conflito: $target já tem conteúdo; preservado." >&2; continue; fi
+  mkdir -p "$(dirname "$target")"
+  ln -s "$REPO/agent.md" "$target"
+  echo "$target -> $REPO/agent.md"
+done
 echo "Skills instaladas; arquivos e links existentes preservados."

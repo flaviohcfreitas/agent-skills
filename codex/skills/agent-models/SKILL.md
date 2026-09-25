@@ -1,9 +1,9 @@
 ---
-name: agents
+name: agent-models
 description: Os modelos do Codex nos quatro papéis — scout, reach, implement, monitoring — e como delegar a subagentes sem sair do Codex. Use ao delegar, ao escolher modelo ou esforço de um subagente, ou ao revisar o que ele entregou.
 ---
 
-# agents — os modelos do Codex
+# agent-models — os modelos do Codex
 
 Mantenha a decisão e integração com o agente principal. Delegue trabalho concreto quando houver uma frente independente útil enquanto o principal continua trabalhando. Esta skill orienta o uso das ferramentas nativas de subagentes do harness em que está instalada.
 
@@ -13,11 +13,13 @@ Use subagentes quando duas frentes puderem avançar independentemente, uma inves
 
 ## Os quatro papéis
 
+O que cada papel faz, como um alimenta o seguinte e de quem é cada skill estão no `agent.md` (global, e na raiz do projeto). Esta skill diz **com qual modelo** cada papel roda neste harness.
+
 Cada subagente recebe **um** papel. O papel decide o modelo; a tarefa decide o papel.
 
 | Papel | O que faz | Modelo | Esforço |
 | --- | --- | --- | --- |
-| **scout** | varredura barata e em paralelo: localizar, inventariar, coletar. Só leitura | `gpt-6-luna` | `medium` |
+| **scout** | busca e junta, barato e em paralelo, a informação que o reach precisa: localizar, inventariar, coletar. Só leitura | `gpt-6-luna` | `medium` |
 | **implement** | executa a tarefa que o reach planejou, com arquivos exclusivos. Não decide o caminho | `gpt-6-luna` | `xhigh`; `max` no trabalho delimitado mais difícil |
 | **monitoring** | confere o que o implement entregou, pelo diff e pela verificação. Não conserta | `gpt-6-sol` | `max` |
 | **reach** | plano, arquitetura, ambiguidade central: a visão que o implement vai executar | modelo principal; `gpt-6-astra` como planejador separado | `high`; `max` nos casos mais difíceis |

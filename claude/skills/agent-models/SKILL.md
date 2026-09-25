@@ -1,20 +1,22 @@
 ---
-name: agents
+name: agent-models
 description: Os modelos do Claude Code nos quatro papéis — scout, reach, implement, monitoring — e como delegar a subagentes sem sair do Claude Code. Use ao delegar, ao escolher o modelo de um subagente, ou ao revisar o que ele entregou.
 ---
 
-# agents — os modelos do Claude Code
+# agent-models — os modelos do Claude Code
 
 Mantenha a decisão e a integração com a sessão principal. Delegue quando houver uma frente independente, e dê a cada subagente **um** papel. O papel decide o modelo; a tarefa decide o papel.
 
 ## Os quatro papéis
 
-| Papel | O que faz | Modelo | Na Agent tool |
+O que cada papel faz, como um alimenta o seguinte e de quem é cada skill estão no `agent.md` (global, e na raiz do projeto). Esta skill diz **com qual modelo** cada papel roda neste harness.
+
+| Papel | O que faz | Modelo | Subagente pronto |
 | --- | --- | --- | --- |
-| **scout** | varredura barata e em paralelo: localizar, inventariar, coletar. Só leitura | Haiku 4.5 | `model: "haiku"` |
-| **implement** | executa a tarefa que o reach planejou, com arquivos exclusivos. Não decide o caminho | Sonnet 5 | `model: "sonnet"` |
-| **monitoring** | confere o que o implement entregou, pelo diff e pela verificação. Não conserta | Opus 5.5 | `model: "opus"` |
-| **reach** | plano, arquitetura, ambiguidade central: a visão que o implement vai executar | Fable 5.1 | `model: "fable"`, ou a própria sessão quando ela já roda Fable |
+| **scout** | busca e junta, barato e em paralelo, a informação que o reach precisa: localizar, inventariar, coletar. Só leitura | Haiku 4.5 | `subagent_type: "scout"` |
+| **implement** | executa a tarefa que o reach planejou, com arquivos exclusivos. Não decide o caminho | Sonnet 5 | `subagent_type: "implement"` |
+| **monitoring** | confere o que o implement entregou, pelo diff e pela verificação. Não conserta | Opus 5.5 | `subagent_type: "monitoring"` |
+| **reach** | plano, arquitetura, ambiguidade central: a visão que o implement vai executar | Fable 5.1 | `subagent_type: "reach"`, ou a própria sessão quando ela já roda Fable |
 
 - **A tarefa completa é o ciclo scout → reach → implement → monitoring.** O monitoring que reprova devolve ao implement com o que faltou (até 2 voltas); lacuna de spec volta ao reach. Pular um papel só com o motivo escrito — o reach que já sabe os arquivos dispensa o scout; a tarefa que é só decisão termina no reach.
 - **Pague inteligência no reach e no monitoring, não no scout.** Dez scouts Haiku e um monitoring Opus custam menos e acertam mais que dez Sonnet.
@@ -24,6 +26,8 @@ Mantenha a decisão e a integração com a sessão principal. Delegue quando hou
 - **Fable é o reach, não o atalho.** Tarefa que cabe no Opus fica no Opus; Fable entra quando errar o plano custa mais que o preço dele (US$ 10 · 50 por 1M).
 - Regra do projeto (piso de modelo, fluxo crítico) vence esta tabela.
 - Tudo aqui fica **dentro do Claude Code**. Mandar trabalho para Codex ou Cursor é a skill `orchestri`, e só quando o usuário a chama.
+
+**Os quatro subagentes vêm prontos** em `~/.claude/agents/` (`scout`, `reach`, `implement`, `monitoring`), com modelo, ferramentas e skills do papel. Despache pelo papel; o modelo não se escolhe na hora. O reach não fala com o usuário: quando precisa perguntar, devolve as perguntas à sessão principal.
 
 ## O briefing
 

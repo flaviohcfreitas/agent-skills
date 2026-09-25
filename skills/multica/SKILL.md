@@ -129,7 +129,7 @@ decide **harness e modelo**:
 
 1. **Escolha o papel** pelo trabalho que o agente vai fazer: medir, decidir, construir ou conferir.
 2. **O papel dá harness e modelo:** o melhor de cada papel está na skill `orchestri`; se a máquina do
-   runtime só tem um harness, o modelo daquele papel sai da skill `agents` do harness. Não escolha
+   runtime só tem um harness, o modelo daquele papel sai da skill `agent-models` do harness. Não escolha
    modelo fora dessas tabelas.
 3. **A descrição do agente começa com o papel:** `papel: scout — <o que ele faz>`. É por ela que quem
    atribui um ticket sabe qual agente serve, sem abrir a instrução.
@@ -139,7 +139,7 @@ decide **harness e modelo**:
 ### Qual agente cada ticket leva
 
 Todo ticket nasce com o agente no `--assignee`, e o agente sai do **papel** do trabalho — os mesmos
-quatro da skill `agents`:
+quatro da skill `agent-models`:
 
 | O ticket é… | `--assignee` | Modelo |
 |---|---|---|

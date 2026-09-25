@@ -1,6 +1,0 @@
-interface:
-  display_name: "Agentes do Codex"
-  short_description: "Scout, reach, implement e monitoring com os modelos do Codex"
-  default_prompt: "Use $agents para executar esta tarefa com subagentes quando houver frentes independentes úteis."
-policy:
-  allow_implicit_invocation: true

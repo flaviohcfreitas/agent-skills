@@ -56,13 +56,13 @@ Depois de criar a pasta com `SKILL.md`, execute `./install.sh`. Use nomes difere
 
 **Limite da separação:** o Cursor também descobre `~/.claude/skills` e `~/.codex/skills` por compatibilidade. Portanto, caminhos separados não são isolamento estrito de descoberta no Cursor. As versões de orquestração usam nomes diferentes para evitar colisões e dizem explicitamente em qual harness operar. Desativar todas as importações de terceiros no Cursor também afetaria outras skills e configurações, então o instalador não altera essa preferência. Consulte a [documentação de skills do Cursor](https://prod.cursor.com/docs/skills).
 
-Cada harness tem a skill **`agents`**: os modelos dele nos quatro papéis — **scout**, **reach**, **implement** e **monitoring** — sem sair do harness. A skill compartilhada **`orchestri`** (`skills/orchestri/`, só por invocação manual) escolhe o melhor modelo de cada papel entre os três harnesses; chamá-la é a autorização para cruzar. O roteiro de decisão, briefing e integração vem do [vídeo de Rafael Quintanilha](https://www.youtube.com/watch?v=n4e5wV3unA4).
+Cada harness tem a skill **`agent-models`**: os modelos dele nos quatro papéis — **scout**, **reach**, **implement** e **monitoring** — sem sair do harness. A skill compartilhada **`orchestri`** (`skills/orchestri/`, só por invocação manual) escolhe o melhor modelo de cada papel entre os três harnesses; chamá-la é a autorização para cruzar. O roteiro de decisão, briefing e integração vem do [vídeo de Rafael Quintanilha](https://www.youtube.com/watch?v=n4e5wV3unA4).
 
 | Harness | Skill | scout · implement · monitoring · reach |
 |---|---|---|
-| Codex | `codex/skills/agents/` | GPT-6 Luna · GPT-6 Luna · GPT-6 Sol · GPT-6 Astra |
-| Claude Code | `claude/skills/agents/` | Haiku 4.5 · Sonnet 5 · Opus 5.5 · Fable 5.1 |
-| Cursor | `cursor/skills/agents/` | Composer 2.5 · Composer 2.5 · Grok 4.7 · Grok 4.7 |
+| Codex | `codex/skills/agent-models/` | GPT-6 Luna · GPT-6 Luna · GPT-6 Sol · GPT-6 Astra |
+| Claude Code | `claude/skills/agent-models/` | Haiku 4.5 · Sonnet 5 · Opus 5.5 · Fable 5.1 |
+| Cursor | `cursor/skills/agent-models/` | Composer 2.5 · Composer 2.5 · Grok 4.7 · Grok 4.7 |
 
 `~/.codex/skills` é o diretório específico já usado por esta instalação do Codex. Abra uma nova tarefa ou reinicie o aplicativo se a skill não aparecer. Não é necessário alterar `config.toml`. O instalador também aceita `AGENT_SKILLS_HOME=/caminho` para conferir os links em um destino isolado.
 
