@@ -21,6 +21,7 @@ Mantenha a decisão e a integração com o agente principal. Delegue quando houv
 ⚠️ **Os IDs não foram conferidos em `cursor-agent models`** (25/09/2026, sem login). Rode o comando e use o ID que ele listar.
 
 - **Pague inteligência no reach e no monitoring, não no scout.** Vários scouts Composer e um monitoring Grok custam menos e acertam mais que vários Grok.
+- **Todo papel delega.** Reach, implement ou monitoring — inclusive rodando como agente do Multica — mandam a varredura (localizar, ler log, inventariar) para um **scout**, no modelo barato, e ficam com o raciocínio. Um diagnóstico no modelo caro não lê o repositório inteiro sozinho.
 - **monitoring fica acima do implement, e nunca é o mesmo modelo que construiu.** Grok é o monitoring aqui porque lidera a pista agêntica medida: 71,0% DeepSWE v1.1, 37,6% Terminal-Bench 4.0.
 - **Grok é reach e monitoring ao mesmo tempo.** Quando ele planejou a fatia, a revisão dele herda o próprio plano: para trabalho crítico, peça o monitoring de outro harness pela `orchestri`.
 - **implement com plano incompleto devolve a lacuna** ao principal em vez de decidir sozinho: decidir é do reach.

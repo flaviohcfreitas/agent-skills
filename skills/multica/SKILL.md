@@ -121,6 +121,20 @@ O que o agente faz, nesta ordem:
 dela são os tickets, e a lista está no comentário. Todo outro card do agente continua parando em `in_review`.
 
 
+### Todo agente tem um papel
+
+Todo agente do Multica é um dos quatro papéis — **scout**, **reach**, **implement** ou **monitoring** —,
+seja qual for o nome dele (`Research`, `Builder`, `Operador`...). O nome é do time; o papel é o que
+decide **harness e modelo**:
+
+1. **Escolha o papel** pelo trabalho que o agente vai fazer: medir, decidir, construir ou conferir.
+2. **O papel dá harness e modelo:** o melhor de cada papel está na skill `orchestri`; se a máquina do
+   runtime só tem um harness, o modelo daquele papel sai da skill `agents` do harness. Não escolha
+   modelo fora dessas tabelas.
+3. **A descrição do agente começa com o papel:** `papel: scout — <o que ele faz>`. É por ela que quem
+   atribui um ticket sabe qual agente serve, sem abrir a instrução.
+4. **Agente que faz dois papéis são dois agentes.** Quem constrói não confere o próprio trabalho.
+
 ### Qual agente cada ticket leva
 
 Todo ticket nasce com o agente no `--assignee`, e o agente sai do **papel** do trabalho — os mesmos

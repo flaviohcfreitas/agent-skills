@@ -17,6 +17,7 @@ Mantenha a decisão e a integração com a sessão principal. Delegue quando hou
 | **reach** | plano, arquitetura, ambiguidade central: a visão que o implement vai executar | Fable 5.1 | `model: "fable"`, ou a própria sessão quando ela já roda Fable |
 
 - **Pague inteligência no reach e no monitoring, não no scout.** Dez scouts Haiku e um monitoring Opus custam menos e acertam mais que dez Sonnet.
+- **Todo papel delega.** Reach, implement ou monitoring — inclusive rodando como agente do Multica — mandam a varredura (localizar, ler log, inventariar) para um **scout**, no modelo barato, e ficam com o raciocínio. Um diagnóstico no modelo caro não lê o repositório inteiro sozinho.
 - **monitoring fica acima do implement, e nunca é o mesmo modelo que construiu.** Ele lê o diff, não o relato: o que o implement diz que fez e o que fez são duas coisas.
 - **implement com plano incompleto devolve a lacuna** à sessão em vez de decidir sozinho: decidir é do reach.
 - **Fable é o reach, não o atalho.** Tarefa que cabe no Opus fica no Opus; Fable entra quando errar o plano custa mais que o preço dele (US$ 10 · 50 por 1M).
