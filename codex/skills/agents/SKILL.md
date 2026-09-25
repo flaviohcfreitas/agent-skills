@@ -22,6 +22,7 @@ Cada subagente recebe **um** papel. O papel decide o modelo; a tarefa decide o p
 | **monitoring** | confere o que o implement entregou, pelo diff e pela verificação. Não conserta | `gpt-6-sol` | `max` |
 | **reach** | plano, arquitetura, ambiguidade central: a visão que o implement vai executar | modelo principal; `gpt-6-astra` como planejador separado | `high`; `max` nos casos mais difíceis |
 
+- **A tarefa completa é o ciclo scout → reach → implement → monitoring.** O monitoring que reprova devolve ao implement com o que faltou (até 2 voltas); lacuna de spec volta ao reach. Pular um papel só com o motivo escrito — o reach que já sabe os arquivos dispensa o scout; a tarefa que é só decisão termina no reach.
 - **Pague inteligência no reach e no monitoring, não no scout.** Vários scouts Luna e um monitoring Sol custam menos e acertam mais que vários Sol.
 - **Todo papel delega.** Reach, implement ou monitoring — inclusive rodando como agente do Multica — mandam a varredura (localizar, ler log, inventariar) para um **scout**, no modelo barato, e ficam com o raciocínio. Um diagnóstico no modelo caro não lê o repositório inteiro sozinho.
 - **monitoring fica acima do implement, e nunca é o mesmo modelo que construiu.** Revisão crítica sobe para `gpt-6-astra`.

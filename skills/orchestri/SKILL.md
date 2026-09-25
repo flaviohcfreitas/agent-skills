@@ -33,6 +33,19 @@ node ~/.agents/skills/decision-gate/scripts/rotear.mjs --input rota.json
 
 Cada harness roda **só os modelos dele**: Anthropic no Claude Code, OpenAI no Codex, Grok e Composer no Cursor. O modelo pedido que não existe em harness nenhum é erro alto, nunca substituição calada.
 
+## O ciclo
+
+```
+scout ──► reach ──► implement ──► monitoring
+ medir     decidir    construir     conferir
+                        ▲              │
+                        └── refaz ─────┤   o diff não cumpre a spec: volta, até 2 voltas
+            ▲                          │
+            └── lacuna de spec ────────┘   a spec estava errada ou incompleta
+```
+
+**A tarefa completa passa pelos quatro, nessa ordem.** A saída de cada papel é o handoff do seguinte: os achados do scout, o plano do reach, o diff do implement. O monitoring fecha com **passou**, **refaz** ou **humano**; refaz volta ao implement, lacuna de spec volta ao reach, e depois da segunda volta é humano. Pular um papel só com o motivo escrito no fechamento.
+
 ## O padrão — 25/09/2026
 
 | Papel | O que faz | Modelo | Harness | Se o modelo falhar |

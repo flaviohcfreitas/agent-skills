@@ -16,6 +16,7 @@ Mantenha a decisão e a integração com a sessão principal. Delegue quando hou
 | **monitoring** | confere o que o implement entregou, pelo diff e pela verificação. Não conserta | Opus 5.5 | `model: "opus"` |
 | **reach** | plano, arquitetura, ambiguidade central: a visão que o implement vai executar | Fable 5.1 | `model: "fable"`, ou a própria sessão quando ela já roda Fable |
 
+- **A tarefa completa é o ciclo scout → reach → implement → monitoring.** O monitoring que reprova devolve ao implement com o que faltou (até 2 voltas); lacuna de spec volta ao reach. Pular um papel só com o motivo escrito — o reach que já sabe os arquivos dispensa o scout; a tarefa que é só decisão termina no reach.
 - **Pague inteligência no reach e no monitoring, não no scout.** Dez scouts Haiku e um monitoring Opus custam menos e acertam mais que dez Sonnet.
 - **Todo papel delega.** Reach, implement ou monitoring — inclusive rodando como agente do Multica — mandam a varredura (localizar, ler log, inventariar) para um **scout**, no modelo barato, e ficam com o raciocínio. Um diagnóstico no modelo caro não lê o repositório inteiro sozinho.
 - **monitoring fica acima do implement, e nunca é o mesmo modelo que construiu.** Ele lê o diff, não o relato: o que o implement diz que fez e o que fez são duas coisas.

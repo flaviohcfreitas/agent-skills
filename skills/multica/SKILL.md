@@ -134,6 +134,7 @@ decide **harness e modelo**:
 3. **A descrição do agente começa com o papel:** `papel: scout — <o que ele faz>`. É por ela que quem
    atribui um ticket sabe qual agente serve, sem abrir a instrução.
 4. **Agente que faz dois papéis são dois agentes.** Quem constrói não confere o próprio trabalho.
+5. **O trabalho completo segue o ciclo scout → reach → implement → monitoring**, e as ondas dos subtickets seguem a mesma ordem. O `Monitoring` que reprova abre um subticket `Implement` na onda seguinte com o que faltou (até 2 voltas); lacuna de spec volta ao `Reach`.
 
 ### Qual agente cada ticket leva
 
