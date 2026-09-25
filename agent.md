@@ -78,7 +78,7 @@ Ninguém escolhe modelo na hora: a tarefa diz o papel, e o papel diz o resto.
 | Modo | Como | O gate humano |
 |---|---|---|
 | **passo a passo** | o usuário chama cada papel — pela skill, ou descrevendo a tarefa | em cada passo: nada emenda sozinho |
-| **`/loop-agents`** — *a construir* | um comando roda o ciclo inteiro, com as voltas e o teto em código | a invocação autoriza o ciclo; ele **para** nas perguntas do `grilling`, que são do usuário, e no merge |
+| **`/orbti-loop`** (só Claude Code) | um comando roda o ciclo inteiro, com as voltas e o teto em código; tarefa com tema crítico (dinheiro, crédito, cadastro, auth) para e pede autorização antes de construir | a invocação autoriza o ciclo; ele **para** nas perguntas do `grilling`, que são do usuário, e no merge |
 
 ## O Jev nas passagens
 
