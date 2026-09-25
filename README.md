@@ -2,7 +2,7 @@
 
 Pasta canônica de skills (formato [Agent Skills](https://agentskills.io) — `SKILL.md` com frontmatter `name`/`description`) compartilhada por todos os agentes de código: **Claude Code**, **Codex / app do ChatGPT**, **Cursor** e qualquer outro que leia `~/.agents/skills`.
 
-A única cópia real fica em `skills/`. Os agentes leem por symlink; nada é duplicado.
+As skills compartilhadas ficam em `skills/`; as versões próprias de cada harness ficam em `<agente>/skills/`. Os agentes leem por symlink; nada é duplicado.
 
 ## Como os agentes encontram as skills
 
@@ -20,7 +20,7 @@ git clone https://github.com/flaviohcfreitas/agent-skills.git ~/Sources/agents
 ~/Sources/agents/install.sh
 ```
 
-O `install.sh` cria o symlink `~/.agents/skills` e os links individuais em `~/.claude/skills`. É idempotente: rode de novo depois de adicionar skills.
+O `install.sh` conecta as skills compartilhadas e as exclusivas de cada agente. É idempotente: rode de novo depois de adicionar skills. Preserva pastas locais existentes do Claude e interrompe em links conflitantes, sem mover ou apagar conteúdo.
 
 Alternativa sem clonar (copia em vez de linkar, e não acompanha este repo):
 
@@ -40,6 +40,39 @@ mkdir skills/<nome> && $EDITOR skills/<nome>/SKILL.md
 ```
 
 Depois: `git add skills/<nome> && git commit && git push`.
+
+## Versões por harness
+
+A pasta `skills/` continua compartilhada. Para dar a cada harness uma versão própria, coloque-a fora da pasta compartilhada:
+
+| Origem neste repositório | Destino de instalação | Uso pretendido |
+|---|---|---|
+| `skills/<nome>/` | `~/.agents/skills` e links no Claude | Todos os agentes configurados |
+| `codex/skills/<nome>/` | `~/.codex/skills/<nome>` | Codex |
+| `claude/skills/<nome>/` | `~/.claude/skills/<nome>` | Claude Code |
+| `cursor/skills/<nome>/` | `~/.cursor/skills/<nome>` | Cursor |
+
+Depois de criar a pasta com `SKILL.md`, execute `./install.sh`. Use nomes diferentes dos compartilhados e das outras versões. Não coloque uma versão própria dentro de `skills/`: o link global tornaria seu conteúdo compartilhado.
+
+**Limite da separação:** o Cursor também descobre `~/.claude/skills` e `~/.codex/skills` por compatibilidade. Portanto, caminhos separados não são isolamento estrito de descoberta no Cursor. As versões de orquestração usam nomes diferentes para evitar colisões e dizem explicitamente em qual harness operar. Desativar todas as importações de terceiros no Cursor também afetaria outras skills e configurações, então o instalador não altera essa preferência. Consulte a [documentação de skills do Cursor](https://prod.cursor.com/docs/skills).
+
+Cada harness tem a skill **`agents`**: os modelos dele nos quatro papéis — **scout**, **reach**, **implement** e **monitoring** — sem sair do harness. A skill compartilhada **`orchestri`** (`skills/orchestri/`, só por invocação manual) escolhe o melhor modelo de cada papel entre os três harnesses; chamá-la é a autorização para cruzar. O roteiro de decisão, briefing e integração vem do [vídeo de Rafael Quintanilha](https://www.youtube.com/watch?v=n4e5wV3unA4).
+
+| Harness | Skill | scout · implement · monitoring · reach |
+|---|---|---|
+| Codex | `codex/skills/agents/` | GPT-6 Luna · GPT-6 Luna · GPT-6 Sol · GPT-6 Astra |
+| Claude Code | `claude/skills/agents/` | Haiku 4.5 · Sonnet 5 · Opus 5.5 · Fable 5.1 |
+| Cursor | `cursor/skills/agents/` | Composer 2.5 · Composer 2.5 · Grok 4.7 · Grok 4.7 |
+
+`~/.codex/skills` é o diretório específico já usado por esta instalação do Codex. Abra uma nova tarefa ou reinicie o aplicativo se a skill não aparecer. Não é necessário alterar `config.toml`. O instalador também aceita `AGENT_SKILLS_HOME=/caminho` para conferir os links em um destino isolado.
+
+## Decision Gate global
+
+A cópia canônica do Jev fica em `skills/decision-gate/`, vista como `~/.agents/skills/decision-gate` pela instalação global. `./install.sh` conecta essa mesma skill ao Claude Code, Codex e Cursor. O roteador `scripts/rotear.mjs` recebe um pedido, a frente do principal e candidatos concretos; devolve se vale despachar e qual candidato. `scripts/juiz.mjs` continua avaliando gate, retorno de subagente e comparação. O modo de bancada usa a CLI do Claude.
+
+Para chamadas reais, configure `OPENROUTER_API_KEY` no ambiente do harness ou em `~/.config/juiz/.env` com permissão `600`. A chave não fica neste repositório. `--seco` permite inspecionar a decisão sem chamar a API. Sem chave ou com erro, o juiz devolve erro explícito; a skill decide localmente e informa a limitação. O juiz recomenda, mas não cria subagentes nem altera permissões.
+
+Os hooks globais de usuário de Codex, Claude e Cursor apontam para `skills/decision-gate/scripts/hook-stop.mjs` nesta skill compartilhada. O hook de encerramento apenas fiscaliza o recibo local gerado por `juiz --gate`; ele não chama o Jev, não roda em cada edição e não substitui a verificação do projeto. Cada harness pode exigir revisão/confiança do hook depois que a configuração mudar.
 
 ## Skills
 
