@@ -110,6 +110,12 @@ o despacho é o de cima.
 3. O handoff entra por `herdr agent prompt <frente> "<handoff>" --wait --timeout <ms>`.
 4. O resultado sai por `herdr agent read <frente> --source recent-unwrapped`. Estado `blocked` é o agente pedindo aprovação ou resposta: leia antes de responder.
 
+**O layout de trabalho:** as frentes em painéis ao lado do seu, o usuário lê e edita no `nvim`, e o
+diff passa pelo `lazygit` antes de qualquer commit — é o gate humano. Para abrir um arquivo para o
+usuário revisar: `herdr pane run <painel> "nvim <arquivo>"`; editar dentro do `nvim` é dele. As teclas
+desta instalação: prefixo `Ctrl+s` (o `Ctrl+b` padrão é do Neovim), e `Ctrl+s` `g` abre o `lazygit` num
+popup (`[[keys.command]]` no `~/.config/herdr/config.toml`).
+
 A skill `herdr` é a autoridade dos comandos — ela manda confirmar a sintaxe no `herdr --help` do binário
 instalado. Painel, aba ou workspace que você não criou não se fecha.
 
