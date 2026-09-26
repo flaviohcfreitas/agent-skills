@@ -281,3 +281,31 @@ repetiu, ou o Flávio disser "não faz X" / "isso não sou eu":
 5. estado do projeto mudou → 00-indice.md do projeto atualizado (é meu caminho) → log.md `atualizou`
 6. checklist §7 → Daily/logs/YYYY-MM-DD.md completo → fim
 ```
+
+## Captura automática — a memória pessoal que chega sozinha
+
+O hook `memoria` do projeto (o dos princípios do claude-mem) observa cada turno. A observação que o Jev
+marca como **pessoal** — sobre o Flávio, não sobre o código — nunca vai para o repositório: entra na
+fila `~/.menosjuros/memoria-pessoal/`, com a categoria do protocolo, e o `scripts/drenar.mjs` desta
+skill a grava no vault.
+
+| Categoria | Onde entra | Por quê |
+|---|---|---|
+| `correcao` · `preferencia` | `Daily/logs/<dia>.md` → `## Propostas` | mudança de Contrato é proposta, nunca edição: quem decide é o Elrond |
+| `decisao` | `Daily/logs/<dia>.md` → `## Decisões` | o recall episódico |
+| `pessoa` · `meta` · `aprendizado` | `Daily/logs/<dia>.md` → `## Aprendizados` | promover a `Memoria/Entidades/` (template `E-*`) é decisão de quem revisa |
+
+Cada gravação ganha uma linha no `Memoria/log.md`. O vault é `SECOND_BRAIN_PATH`, senão a VM, senão o
+Mac. Drenar à mão: `node ~/.agents/skills/second-brain/scripts/drenar.mjs`. Sem vault, nada sai da fila.
+
+## Recuperar a memória pessoal
+
+Antes de decidir algo sobre o Flávio — como ele trabalha, o que ele já decidiu, quem é uma pessoa —,
+procure, nesta ordem, e pare quando achar:
+
+1. `Memoria/Contratos/me.md` e `padroes.md` — o que já é regra;
+2. `Memoria/log.md` — as últimas ~30 linhas;
+3. `Daily/logs/` dos últimos dias — `## Decisões`, `## Propostas`, `## Aprendizados`;
+4. `Memoria/Entidades/` — busque pelo nome ou tema (`grep -ril "<termo>"`).
+
+Cite o que achou com o caminho da nota. O que não achou, diga que não achou.
