@@ -99,6 +99,20 @@ acpx <agente> sessions close <frente>
 - Sem `acpx` instalado: `npx -y acpx@latest ...`. Tiro único descartável, sem conversa: `acpx <agente> exec ...`.
 - Quando o usuário perguntar "como está?", mande a pergunta para a sessão. Não responda só pelo log.
 
+### Dentro do herdr — cada frente num painel
+
+**Rodando dentro do herdr (`HERDR_ENV=1`), despache pela skill global `herdr`**, em vez de `acpx`: cada
+frente vira um agente num painel ao lado, e o usuário acompanha cada papel trabalhando. Fora do herdr,
+o despacho é o de cima.
+
+1. Painel novo ao lado do seu, sem roubar o foco: `herdr pane split --current --direction right --cwd "$PWD" --no-focus`.
+2. O agente do harness do papel, com o nome da frente: `herdr agent start <frente> --kind <claude|codex|cursor|grok> --pane <id> -- <o modelo do papel>`.
+3. O handoff entra por `herdr agent prompt <frente> "<handoff>" --wait --timeout <ms>`.
+4. O resultado sai por `herdr agent read <frente> --source recent-unwrapped`. Estado `blocked` é o agente pedindo aprovação ou resposta: leia antes de responder.
+
+A skill `herdr` é a autoridade dos comandos — ela manda confirmar a sintaxe no `herdr --help` do binário
+instalado. Painel, aba ou workspace que você não criou não se fecha.
+
 ### Na nuvem — Railway cloud agents
 
 **`--ca` no pedido manda para o Railway** — `/orchestri <tarefa> --ca`, ou `--ca` escrito na conversa. Vale para todas as frentes daquele pedido; sem `--ca`, o despacho é local. Uma VM nova por frente, com o nome da frente:
@@ -112,6 +126,7 @@ acpx <agente> sessions close <frente>
 - **O Cursor não roda no Railway.** O implement Grok 4.7 vai pela Grok CLI (linha acima); o Composer fica local.
 - **A VM nasce sem o repositório.** Passe `--bootstrap <molde>` quando o projeto tem molde com o código; sem molde, o briefing diz de onde clonar.
 - As credenciais locais de cada CLI são copiadas para a VM: cada pessoa roda com a própria conta.
+- **Com herdr, a VM vira uma máquina dele:** `herdr machine add <alias-ssh> --label <frente>` (o herdr da VM na **mesma versão** do local; instale pelo release do GitHub antes, porque sem terminal o `machine add` não instala), e a frente roda num painel da VM com `herdr --machine <frente> agent start …`. O usuário vê a VM na barra lateral do herdr. No fim, `herdr machine remove`.
 - **Toda VM se apaga ao fim da frente, com ou sem erro:** `railway ca delete <frente> --yes`. O Railway não desliga VM ociosa, e VM esquecida cobra 24 h por dia. Antes de fechar a resposta, `railway ca list` mostra zero VMs suas desta rodada.
 
 ### A passagem de bastão é um handoff
