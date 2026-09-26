@@ -4,7 +4,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-import { anexarNaSecao, caminhoDoVault, drenar } from './drenar.mjs'
+import { symlinkSync } from 'node:fs'
+import { pathToFileURL } from 'node:url'
+
+import { anexarNaSecao, caminhoDoVault, drenar, ehEntrada } from './drenar.mjs'
 
 const vaultFalso = () => {
   const v = mkdtempSync(join(tmpdir(), 'vault-'))
@@ -50,4 +53,12 @@ test('sem vault, nada sai da fila', () => {
   const r = drenar({ fila, vault: null })
   assert.match(r.erro, /vault não encontrado/)
   assert.equal(existsSync(join(fila, 'a.json')), true)
+})
+
+test('chamado por atalho, o script ainda reconhece que é o programa', () => {
+  const d = mkdtempSync(join(tmpdir(), 'atalho-'))
+  const real = join(d, 'real.mjs'); writeFileSync(real, '')
+  const atalho = join(d, 'atalho.mjs'); symlinkSync(real, atalho)
+  assert.equal(ehEntrada(atalho, pathToFileURL(real).href), true)
+  assert.equal(ehEntrada(join(d, 'outro.mjs'), pathToFileURL(real).href), false)
 })

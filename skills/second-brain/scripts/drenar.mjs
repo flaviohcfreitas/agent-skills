@@ -4,7 +4,7 @@
 // seção da categoria, e cada gravação ganha uma linha no Memoria/log.md. Correção e preferência viram
 // PROPOSTA — nunca edição de Memoria/Contratos/, que é do Elrond.
 
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -76,7 +76,12 @@ export function drenar({ fila = FILA, vault = caminhoDoVault(), agora = new Date
   return { gravados, vault }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+/** Rodou como programa? Compara os caminhos REAIS: chamado por atalho (~/.agents/skills), os dois diferem. */
+export const ehEntrada = (argv1, url = import.meta.url) => {
+  try { return realpathSync(argv1) === realpathSync(fileURLToPath(url)) } catch { return false }
+}
+
+if (ehEntrada(process.argv[1])) {
   const r = drenar()
   console.log(r.erro ? `second-brain: ${r.erro}` : `second-brain: ${r.gravados} observação(ões) no vault`)
   process.exit(r.erro ? 1 : 0)
