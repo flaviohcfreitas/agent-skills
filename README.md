@@ -56,12 +56,12 @@ Depois de criar a pasta com `SKILL.md`, execute `./install.sh`. Use nomes difere
 
 **Limite da separação:** o Cursor também descobre `~/.claude/skills` e `~/.codex/skills` por compatibilidade. Portanto, caminhos separados não são isolamento estrito de descoberta no Cursor. As versões de orquestração usam nomes diferentes para evitar colisões e dizem explicitamente em qual harness operar. Desativar todas as importações de terceiros no Cursor também afetaria outras skills e configurações, então o instalador não altera essa preferência. Consulte a [documentação de skills do Cursor](https://prod.cursor.com/docs/skills).
 
-Cada harness tem a skill **`agent-models`**: os modelos dele nos quatro papéis — **scout**, **reach**, **implement** e **monitoring** — sem sair do harness. A skill compartilhada **`orchestri`** (`skills/orchestri/`, só por invocação manual) escolhe o melhor modelo de cada papel entre os três harnesses; chamá-la é a autorização para cruzar. O roteiro de decisão, briefing e integração vem do [vídeo de Rafael Quintanilha](https://www.youtube.com/watch?v=n4e5wV3unA4).
+Codex e Cursor têm a skill **`agent-models`**: os modelos deles nos quatro papéis — **scout**, **reach**, **implement** e **monitoring** — sem sair do harness. No Claude Code, a skill **`orchestri`** (`claude/skills/orchestri/`, só por invocação manual) é a tabela e o grafo: roda os quatro papéis num workflow dinâmico, cada papel no harness do modelo dele, e `--claude`, `--codex`, `--cursor` ou `--grok` restringem aos harnesses nomeados. Chamá-la é a autorização para cruzar. `orbti-loop` e a `agent-models` do Claude saíram em 27/09/2026, absorvidas por ela. O roteiro de decisão, briefing e integração vem do [vídeo de Rafael Quintanilha](https://www.youtube.com/watch?v=n4e5wV3unA4).
 
 | Harness | Skill | scout · implement · monitoring · reach |
 |---|---|---|
 | Codex | `codex/skills/agent-models/` | GPT-6 Luna · GPT-6 Luna · GPT-6 Sol · GPT-6 Astra |
-| Claude Code | `claude/skills/agent-models/` | Haiku 4.5 · Sonnet 5 · Opus 5.5 · Fable 5.1 |
+| Claude Code | `claude/skills/orchestri/` (`--claude`) | Haiku 4.5 · Sonnet 5 · Opus 5.5 · Opus 5.5 (Fable 5.1 na escalada) |
 | Cursor | `cursor/skills/agent-models/` | Composer 2.5 · Composer 2.5 · Grok 4.7 · Grok 4.7 |
 
 `~/.codex/skills` é o diretório específico já usado por esta instalação do Codex. Abra uma nova tarefa ou reinicie o aplicativo se a skill não aparecer. Não é necessário alterar `config.toml`. O instalador também aceita `AGENT_SKILLS_HOME=/caminho` para conferir os links em um destino isolado.
@@ -85,7 +85,6 @@ As skills do Obsidian (`obsidian-cli`, `obsidian-markdown`) **não** ficam aqui:
 | `codebase-design` | Shared vocabulary for designing deep modules. Use when the user wants to design or improve a module's interface, find deepening opportunities, deci… | local (menos-juros) |
 | `diagnosing-bugs` | Diagnosis loop for hard bugs and performance regressions. Use when the user says "diagnose"/"debug this", or reports something broken/throwing/fail… | local (menos-juros) |
 | `domain-modeling` | Build and sharpen a project's domain model. Use when discussing codebase terminology, writing or editing a CONTEXT.md, or recording or editing an ADR. | local (menos-juros) |
-| `gauntlet-loop` | Turns any goal into one short, paste-ready "gauntlet loop" prompt - a prompt that makes an agent set a concrete quality bar, split the work into sm… | [robonuggets/gauntlet-loop](https://github.com/robonuggets/gauntlet-loop) |
 | `grill-me` | A relentless interview to sharpen a plan or design. | local (menos-juros) |
 | `grill-with-docs` | A relentless interview to sharpen a plan or design, which also creates docs (ADR's and glossary) as we go. | local (menos-juros) |
 | `grilling` | Grill the user relentlessly about a plan, decision, or idea. Use when the user wants to stress-test their thinking, or uses any 'grill' trigger phr… | local (menos-juros) |

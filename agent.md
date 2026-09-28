@@ -2,8 +2,8 @@
 
 Todo trabalho anda por **quatro papéis**, e **toda skill pertence a um deles**. Quem executa uma
 skill é o subagente do papel dono dela, no momento do ciclo em que aquele papel entra. O papel decide
-o harness e o modelo — a tabela é da skill `agent-models` de cada harness, e o melhor entre harnesses
-é da `orchestri`. A skill decide o método.
+o harness e o modelo — no Claude Code a tabela é da `orchestri`, no Codex e no Cursor é da `agent-models`
+daquele harness. A skill decide o método.
 
 ```
 demanda / issue
@@ -67,7 +67,7 @@ Ninguém escolhe modelo na hora: a tarefa diz o papel, e o papel diz o resto.
 | conferir o que foi construído | **monitoring** | outro modelo, acima do implement, `code-review` e o juiz |
 
 - **No Claude Code**, os quatro são subagentes prontos em `~/.claude/agents/` (`subagent_type:
-  "scout"`, `"reach"`, `"implement"`, `"monitoring"`).
+  "scout"`, `"reach"`, `"implement"`, `"monitoring"`), e a `orchestri` tem a tabela.
 - **No Codex e no Cursor**, o subagente nasce com o modelo e o esforço que a skill `agent-models`
   daquele harness dá para o papel.
 - **O reach não fala com o usuário**: quando precisa perguntar (o `grilling`), devolve as perguntas à
@@ -78,7 +78,7 @@ Ninguém escolhe modelo na hora: a tarefa diz o papel, e o papel diz o resto.
 | Modo | Como | O gate humano |
 |---|---|---|
 | **passo a passo** | o usuário chama cada papel — pela skill, ou descrevendo a tarefa | em cada passo: nada emenda sozinho |
-| **`/orbti-loop`** (só Claude Code) | um comando roda o ciclo inteiro, com as voltas e o teto em código; tarefa com tema crítico (dinheiro, crédito, cadastro, auth) para e pede autorização antes de construir | a invocação autoriza o ciclo; ele **para** nas perguntas do `grilling`, que são do usuário, e no merge |
+| **`/orchestri`** (só Claude Code) | um comando roda o grafo inteiro num workflow dinâmico: o Jev decide se a tarefa é grande (`to-map`, com scouts dirigidos pelos tickets de pesquisa) ou pequena (scouts e `grilling`); o reach segue com `to-spec` e `to-tickets`; um implement por ticket com o seu monitoring; e o Jev julga o todo — passou abre o PR —, em loop até a tarefa fechar. Cada papel no harness do modelo dele; `--claude`, `--codex`, `--cursor` ou `--grok` restringem. Tema crítico (dinheiro, crédito, cadastro, auth) para e pede autorização antes de construir | a invocação autoriza o grafo; ele **para** nas perguntas do `grilling`, que são do usuário, e no merge |
 
 ## O Jev nas passagens
 

@@ -1,7 +1,7 @@
 ---
 name: reach
 description: 'Papel reach — decide: escreve a spec, quebra em tickets, prototipa, traça o mapa, diagnostica a causa. O modelo mais capaz. Use quando o caminho ainda não está decidido.'
-model: fable
+model: opus
 effort: high
 ---
 

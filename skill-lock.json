@@ -30,15 +30,6 @@
       "installedAt": "2026-09-20T14:18:28.292Z",
       "updatedAt": "2026-09-20T14:18:28.292Z"
     },
-    "gauntlet-loop": {
-      "source": "robonuggets/gauntlet-loop",
-      "sourceType": "github",
-      "sourceUrl": "https://github.com/robonuggets/gauntlet-loop.git",
-      "skillPath": ".claude/skills/gauntlet-loop/SKILL.md",
-      "skillFolderHash": "1e764a30e3673f7b3edd1511271443a77e59f6fb",
-      "installedAt": "2026-09-20T14:18:30.103Z",
-      "updatedAt": "2026-09-20T14:18:30.103Z"
-    },
     "llm-wiki": {
       "source": "NousResearch/hermes-agent",
       "sourceType": "github",
