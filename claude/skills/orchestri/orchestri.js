@@ -271,9 +271,8 @@ if (!plano) {
 const respostas = [...(args?.respostas ?? [])]   // cresce com cada questionário respondido
 // Resposta a pergunta do to-spec não reabre o grilling nem o mapa: cada resposta leva a rota de origem.
 const respostasDescoberta = () => respostas.filter((r) => r?.rota !== 'to-spec' && r?.rota !== 'aprovacao')
-// O mapa passa pela janela principal antes de abrir painel: a aprovação casa pela assinatura do mapa.
-const assinatura = (m) => { const t = JSON.stringify([m.destino, m.fatias, m.perguntas, m.research, m.prototipos, m.humano]); let h = 5381; for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0; return h.toString(36) }
-const aprovado = (m) => respostas.some((r) => r?.rota === 'aprovacao' && r.mapa === assinatura(m) && /^\s*sim/i.test(r.resposta ?? ''))
+// O mapa aparece na janela principal a cada rodada; a lista vai no resultado do grafo.
+const mapas = []
 const paineisDo = (m) => [...(m.perguntas?.length ? [{ painel: 'Grilling · to-map', para: `${m.perguntas.length} pergunta(s) para você` }] : []), ...(m.prototipos ?? []).map((p) => ({ painel: `Protótipo · ${p.ticket}`, para: p.pergunta }))]
 const MAX_VOLTAS_TICKET = 2   // refaz por ticket
 const MAX_RODADAS = 3         // reach → implement → monitoring, até a tarefa fechar
@@ -284,7 +283,7 @@ const decididoSozinho = []
 const linhas = []   // a linha de cada frente, para o fechamento
 
 const texto = (o) => JSON.stringify(o, null, 2)
-const fim = (estado, extra) => ({ estado, tarefa, modo: plano.modo, avisos: plano.avisos ?? [], frentes: linhas, decidido_sozinho: decididoSozinho, ...extra })
+const fim = (estado, extra) => ({ estado, tarefa, modo: plano.modo, avisos: plano.avisos ?? [], frentes: linhas, decidido_sozinho: decididoSozinho, mapas, ...extra })
 const ALIAS = { 'claude-haiku-4-5': 'haiku', 'claude-sonnet-5': 'sonnet', 'claude-opus-5-5': 'opus', 'claude-fable-5-1': 'fable' }
 
 // --- a ponte: cada papel roda no harness do plano -----------------------------------------
@@ -556,15 +555,15 @@ for (let volta = 0; volta < 2 && !entendimento; volta++) {
       if (m.humano?.length) return fim('humano', { motivo: `o mapa tem ticket que é do usuário: ${m.humano.map((h) => `${h.ticket} (${h.tipo}): ${h.o_que}`).join('; ')}`, mapa: m })
       const onde = `to-map ${volta}.${rodadaMapa}`
       log(`mapa ${onde}: ${(m.fatias ?? []).map((f) => f.nome).join(' → ')}; painéis: ${paineisDo(m).map((x) => x.painel).join(', ') || 'nenhum'}; scouts: ${m.research?.length ?? 0}`)
-      // Todo mapa vai à janela principal e espera aprovação: o usuário vê onde estamos e o que vai abrir.
-      if (!aprovado(m)) return fim('mapa', { mapa: m, assinatura: assinatura(m), onde, abre: paineisDo(m), scouts: (m.research ?? []).map((x) => x.ticket) })
+      // Todo mapa aparece na janela principal (o log e o journal): a sessão mostra, sem parar o grafo.
+      mapas.push({ onde, destino: m.destino, fatias: (m.fatias ?? []).map((f) => f.nome), abre: paineisDo(m), scouts: (m.research ?? []).map((x) => x.ticket), nevoa: m.nevoa ?? [], fora: m.fora_do_escopo ?? [] })
       if (m.research?.length || m.perguntas?.length || m.prototipos?.length) {
         log(`to-map: ${m.research?.length ?? 0} scout(s) dirigido(s), ${m.perguntas?.length ?? 0} pergunta(s), ${m.prototipos?.length ?? 0} protótipo(s) — em paralelo`)
         const r = await perguntarEBuscar(m.perguntas, (m.research ?? []).map((x) => ({ pergunta: x.pergunta, label: `scout:${x.ticket}` })), 'to-map', m.prototipos ?? [])
         if (r.pausa) return fim('perguntas', { perguntas: r.pausa, rota: 'to-map', mapa: m })
         continue
       }
-      // aprovado na janela principal e sem pendências: é a confirmação antes da spec
+      // mapa sem pendências: segue para a spec (o usuário acompanha o mapa na janela principal)
       entendimento = m
     }
     if (grande && !entendimento) return fim('humano', { motivo: 'o to-map rodou cinco vezes sem fechar o mapa' })
