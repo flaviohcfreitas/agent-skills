@@ -44,7 +44,7 @@ Jev ──┤              │ sem névoa                                 ├─
 | --- | --- | --- | --- | --- | --- | --- |
 | **scout** | busca e junta: localiza, lê, inventaria. Só leitura | decidir, escrever | GPT-6 Luna `medium` | Haiku 4.5 | GPT-6 Luna | Composer 2.5 |
 | **reach** | decide: spec, tickets, perguntas | construir | Opus 5.5; Fable 5.1 na escalada | Opus 5.5 · Fable | GPT-6 Astra | Grok 4.7 |
-| **implement** | constrói o ticket, com teste | decidir o caminho | Grok 4.7 **no Cursor** (`cursor-agent --model grok-4.7-high`) | Sonnet 5 | GPT-6 Luna `xhigh` | Composer 2.5 |
+| **implement** | constrói o ticket, com teste | decidir o caminho | Grok 4.7 **no Cursor** (`cursor-agent --model grok-4.7-high`) | Sonnet 5.5 | GPT-6 Luna `xhigh` | Composer 2.5 |
 | **monitoring** | confere pelo diff e pela verificação | consertar | GPT-6 Sol `max` | Opus 5.5 | GPT-6 Sol `max` | Grok 4.7 |
 
 **Luna faz o trabalho pesado, Opus e Fable planejam, Grok executa, GPT monitora.**

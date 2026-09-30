@@ -17,7 +17,7 @@ test('todos os harnesses: Luna pesado, Opus planeja, Grok (no Cursor) executa, S
 test('--claude: os quatro papéis no Claude Code, monitoring acima do implement', () => {
   const p = planejar(TODOS, ['claude'])
   assert.deepEqual(resumo(p), {
-    scout: 'claude:claude-haiku-4-5', reach: 'claude:claude-opus-5-5', implement: 'claude:claude-sonnet-5', monitoring: 'claude:claude-opus-5-5',
+    scout: 'claude:claude-haiku-4-5', reach: 'claude:claude-opus-5-5', implement: 'claude:claude-sonnet-5-5', monitoring: 'claude:claude-opus-5-5',
   })
   assert.equal(p.papeis.scout.comando, null)
   assert.ok(p.avisos.some((a) => a.includes('mesmo provedor')))

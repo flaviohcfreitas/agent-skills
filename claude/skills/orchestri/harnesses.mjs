@@ -36,7 +36,7 @@ export const PREFERENCIA = {
       monitoring: { harness: 'claude', modelo: 'claude-fable-5-1', esforco: 'high', provedor: 'anthropic' } },
     { harness: 'cursor', modelo: 'composer-2.5', esforco: null, provedor: 'cursor' },
     { harness: 'codex', modelo: 'gpt-6-luna', esforco: 'xhigh', provedor: 'openai' },
-    { harness: 'claude', modelo: 'claude-sonnet-5', esforco: null, provedor: 'anthropic' },
+    { harness: 'claude', modelo: 'claude-sonnet-5-5', esforco: null, provedor: 'anthropic' },
   ],
   monitoring: [
     { harness: 'codex', modelo: 'gpt-6-sol', esforco: 'max', provedor: 'openai' },
