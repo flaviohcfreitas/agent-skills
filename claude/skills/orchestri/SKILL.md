@@ -24,13 +24,11 @@ Jev ──┤              │ sem névoa                                 ├─
 - **O Jev abre o grafo:** pelo texto do pedido, decide **grande** (`to-map`, reach no Fable) ou **pequena** (`grilling`, reach no Opus). O código lê a decisão; o Jev não escreve.
 - **Grande → to-map.** O mapa fica no grafo, **sem publicar** no tracker. Cada ticket `research` do mapa vira um **scout dirigido** — com a pergunta exata que uma decisão espera —, e o mapa roda de novo com os achados, até fechar (teto de 3). Tickets `grilling` viram perguntas ao usuário; `prototype` e `task` param em humano.
 - **Pequena → scouts em ângulos fixos** (código, decisões, comportamento) **e o grilling**: o que precisa estar decidido antes da spec. As perguntas voltam ao usuário (`estado: perguntas`).
-- **As perguntas viram um questionário** numa página do navegador (skill `grill-with-ui`, modo espera): todas as perguntas da rodada, com a recomendação, respondidas em qualquer ordem. **Enquanto você responde, os scouts da mesma rodada rodam** — perguntas e busca de fatos saem juntas. O grafo mostra o endereço da página e abre no navegador.
+- **As perguntas vão para um painel do Herdr.** O grafo abre um painel ao lado da sessão, com um Claude interativo (Opus 5.5) que conduz o grilling com você pela interface dele: todas as perguntas da rodada, cada uma com a recomendação. **Enquanto você responde, os scouts da mesma rodada rodam.** O agente do painel grava as respostas num arquivo, e o nó do grafo espera esse arquivo.
 - **Confirmação antes da spec:** quando o grilling ou o mapa fecha, o grafo mostra o resumo e pergunta se o entendimento está certo. "Não" com a correção no texto refaz a rodada; só "sim" segue para o `to-spec`.
 - **O grilling roda com a `domain-modeling`**, como o ticket grilling do `to-map` manda.
-- **Tickets `prototype` do mapa viram um HTML para você avaliar**, feito pelo Opus 5.5 com a skill `prototype`:
-  - **Tela** → abre no **modo live da `impeccable`**: você seleciona um elemento, comenta ou desenha em cima, pede variações e aceita uma, direto no HTML. O Opus 5.5 atende cada ação num nó `live:<ticket>`. O que você comentou e aceitou volta ao mapa como resposta.
-  - **Lógica** → a máquina de estados com botões e roteiros, que aparece na página do questionário.
-  - Tela no live e lógica no questionário rodam **ao mesmo tempo**, e os scouts seguem enquanto isso.
+- **Tickets `prototype` do mapa abrem outro painel do Herdr**, com um Claude que roda a skill `prototype` original (o ramo que ela manda: lógica ou tela) e publica o protótipo como **artifact do Claude**. Você abre o link, conversa no painel e julga; a decisão e os comentários voltam ao mapa como resposta. Grilling, protótipos e scouts rodam **ao mesmo tempo**.
+- **Artifact é publicado: nunca leva dado real de cliente.** Com dado de produção, o protótipo usa a forma (campos, distribuições, contagens) com valores fictícios.
 - **Tickets `task` param o grafo em humano** — decisão do Flávio, 27/09/2026: a task AFK também para.
 - **As duas redes, em código:** o `to-map` que não acha névoa desce para o grilling, no Opus; o grilling que marca `precisa_mapa` sobe para o `to-map`, no Fable. Cada rede troca de caminho uma vez só.
 - **to-spec, depois to-tickets:** o reach fecha a spec da tarefa inteira e a quebra em **tickets**, cada um com arquivos exclusivos, critério de pronto e dependências. Os tickets ficam no grafo, sem publicar no tracker.
@@ -63,7 +61,7 @@ Jev ──┤              │ sem névoa                                 ├─
 
 ## Rodar
 
-**O grafo inteiro roda dentro do workflow**, da detecção dos harnesses ao PR, para a zoe e o `/workflows` mostrarem cada nó: `harnesses` → `jev:porta` → mapa ou grilling → questionário → spec → tickets → implements e monitorings → `jev` → `pr`.
+**O grafo inteiro roda dentro do workflow**, da detecção dos harnesses ao PR, para a zoe e o `/workflows` mostrarem cada nó: `harnesses` → `jev:porta` → mapa ou grilling → painéis do Herdr (grilling, protótipo) → spec → tickets → implements e monitorings → `jev` → `pr`.
 
 1. **O terreno.** `git status`: os implements escrevem no branch atual. Com mudança alheia não commitada, diga isso antes de seguir — o PR só leva os arquivos dos tickets, mas o working tree é compartilhado.
 2. **Dispare.** Copie `orchestri.js` para o scratchpad da sessão e passe esse caminho em `scriptPath` — o Workflow só aceita `scriptPath` de um diretório que a sessão já lê, e colar os 43 KB em `script` custa o dobro. `repo` roda o grafo em outro repositório (todo nó trabalha nele). `flags` são as do usuário (`claude`, `codex`, `cursor`, `grok`; vazio = todos os instalados):
@@ -81,21 +79,10 @@ Jev ──┤              │ sem névoa                                 ├─
 
 | `estado` | O que fazer |
 | --- | --- |
-| `perguntas` | **Só quando o questionário falhou**: a página não abriu, ou ficou 45 min sem resposta. Vêm do `grilling`, do `to-map` ou do `to-spec` (o campo `rota` diz qual). Pergunte ao usuário (AskUserQuestion), com a recomendação do reach como primeira opção. Some as respostas em `respostas`, cada uma como `{ pergunta, resposta, rota }` — resposta com `rota: "to-spec"` não reabre o grilling nem o mapa e **retome**: `Workflow({ scriptPath, resumeFromRunId: runId, args: { tarefa, flags, respostas } })` — os nós anteriores voltam do cache |
+| `perguntas` | **Só quando o painel falhou**: a sessão está fora do Herdr, o painel não abriu, ou ficou 45 min sem resposta. Vêm do `grilling`, do `to-map` ou do `to-spec` (o campo `rota` diz qual). Pergunte ao usuário (AskUserQuestion), com a recomendação do reach como primeira opção. Some as respostas em `respostas`, cada uma como `{ pergunta, resposta, rota }` — resposta com `rota: "to-spec"` não reabre o grilling nem o mapa e **retome**: `Workflow({ scriptPath, resumeFromRunId: runId, args: { tarefa, flags, respostas } })` — os nós anteriores voltam do cache |
 | `critico` | Mostre a spec e o motivo. Com o ok do usuário, retome com `autorizar_critico: true` |
 | `humano` | Pare. Mostre o motivo, os tickets `entregues` e o que ficou aberto; o usuário decide |
 | `passou` | O Jev passou e o nó `pr` abriu o PR: entregue a **conferência** com o link (`pr.url`), ou o comando em `pr.erro` quando o PR não abriu |
-
-## O gauntlet visual — o protótipo de tela contra uma referência real
-
-O truque central do gauntlet: a régua é uma **referência real**, não um critério.
-
-1. Enquanto o Opus constrói o HTML, o reach propõe **2 ou 3 referências**, cada uma **nomeada** (uma coisa específica, não uma categoria), **abrível** (URL pública ou rota local já servida) e **comparável** (dá para pôr lado a lado). A mais difícil que dá para alcançar vem primeiro.
-2. Você escolhe no mesmo questionário da rodada, e o modo live roda junto.
-3. Depois do live (o HTML já tem o que você aceitou), um nó tira os **dois prints no mesmo tamanho** com nomes neutros, **A e B, que trocam de lado a cada volta em código**.
-4. Um **crítico duro** (Fable, contexto novo) vê só as duas imagens e escolhe a melhor. Ele nunca sabe qual é a nossa.
-5. Perdemos: o Opus melhora o protótipo com o que o crítico apontou, sem copiar a referência, e compara de novo. **Teto de 3 voltas.**
-6. O resultado ("venceu X às cegas na volta N", "não venceu; falta…" ou "não comparado") volta ao mapa como resposta.
 
 ## O gauntlet adversarial — antes do PR
 
@@ -107,19 +94,15 @@ Quando algum ticket toca tela (o código decide pelos arquivos: `.tsx`, `.jsx`, 
 - O veredito sai do exit code do adversarial (0 limpo · 2 defeitos · 1 erro/infra). Projeto sem o script: o PR segue e a conferência diz isso.
 - A skill `gauntlet-loop` saiu em 27/09/2026: o conceito dela (régua antes, crítico separado, voltar até ganhar) vive aqui.
 
-## O questionário
+## Os painéis do Herdr
 
-Dois nós por rodada: um abre a sessão do `grill-with-ui` (`new`, um `patch` com todas as perguntas, `serve` destacado, `url`, `open`); outro espera no modo espera (`wait` em laços de até 8 min, porque o Bash tem teto de 10 min), aplica cada envio e para quando tudo está respondido ou adiado. As respostas entram em `respostas` com a `rota` de origem e seguem no grafo. **O nó que espera morre com a sessão**: fechar o terminal no meio perde a rodada, e a retomada volta a perguntar.
+O grilling e os protótipos saíram do navegador em 30/09/2026, a pedido do Flávio: a página do `grill-with-ui`, o modo live da `impeccable` e o gauntlet visual deram lugar a painéis do Herdr.
 
-## O modo live
-
-Provado num subagente de workflow em 27/09/2026. O nó `live:<ticket>` faz o boot da `impeccable` (`live --target` no HTML), serve a página por http numa porta livre, abre no navegador e fica no `live-poll` em primeiro plano, atendendo `generate`, `steer`, `accept`, `discard` e os outros eventos, até o `exit` ou 45 min. No fim, roda o Cleanup e para o servidor.
-
-- **Protótipo de tela fica numa pasta própria** (`$TMPDIR/orchestri-prototipo-<ticket>/`). O live exige `PRODUCT.md` e `DESIGN.md`: fora do repositório, o nó escreve os dois mínimos ao lado do HTML; dentro do repositório, nunca cria — usa o `--target` na app que já tem os dois.
-- **O `accept` está provado** (27/09/2026): a variação aceita foi gravada no HTML (a limpeza "carbonize" da Impeccable). Para selecionar, o usuário usa **Pick** (Insert põe bloco novo; Steer é conversa).
-- **O nó que espera sempre devolve o contrato**, mesmo no tempo esgotado (`parcial=true`): sem isso, o workflow refaz o nó do zero, a nova tentativa espera uma página que ninguém abre, e o relatório final sai errado — aconteceu no teste.
-- **Sessão velha da Impeccable** deixa aviso na página: o nó fecha as `activeSessions` com `live-complete` antes do boot.
-- **O helper da `impeccable` pode inserir no lugar errado** quando há várias caixas iguais (escolheu o primeiro `div.box`): o nó confere a âncora e corrige.
+- **Um nó `painel:<nome>` por conversa.** Uma ponte (Haiku) confere `HERDR_ENV`, grava o briefing num arquivo, abre o painel com `herdr pane split --current --no-focus`, inicia um Claude (`herdr agent start … --kind claude -- --model claude-opus-5-5`) e entrega o briefing com `herdr agent prompt`.
+- **O contrato volta por arquivo.** O agente do painel grava um JSON ao terminar; a ponte espera o arquivo em laços de até 8 min (o Bash tem teto de 10 min), até 45 min no total.
+- **O painel fica aberto** no fim: quem fecha é você.
+- **Fora do Herdr, ou sem resposta em 45 min**, o grafo pausa em `estado: perguntas`, e a sessão pergunta pelo terminal.
+- **O nó que espera morre com a sessão:** fechar o terminal no meio perde a rodada, e a retomada abre o painel de novo.
 
 ## O que o primeiro teste real ensinou (27/09/2026)
 

@@ -8,8 +8,8 @@ export const meta = {
     { title: 'Mapa', detail: 'grande (pelo Jev): to-map no grafo, sem publicar — destino, fatias, decisões, névoa' },
     { title: 'Scout', detail: 'dirigidos pelos tickets research do mapa, ou ângulos fixos na tarefa pequena' },
     { title: 'Grilling', detail: 'pequena: grilling + domain-modeling; pode subir para o mapa' },
-    { title: 'Protótipo', detail: 'o Opus 5.5 faz o HTML; tela: modo live + gauntlet visual (referência real, crítico Fable às cegas, melhora até ganhar); lógica vai ao questionário' },
-    { title: 'Questionário', detail: 'as perguntas numa página (grill-with-ui) enquanto os scouts rodam; confirmação antes da spec' },
+    { title: 'Protótipo', detail: 'um Claude num painel do Herdr roda a skill prototype e publica como artifact; o usuário julga na conversa do painel' },
+    { title: 'Questionário', detail: 'o grilling num painel do Herdr, com um Claude conversando com o usuário, enquanto os scouts rodam; confirmação antes da spec' },
     { title: 'Spec', detail: 'to-spec: a spec fechada da tarefa' },
     { title: 'Tickets', detail: 'to-tickets: tickets com arquivos exclusivos e dependência' },
     { title: 'Implement', detail: 'um implement por ticket, em ondas de dependência' },
@@ -329,11 +329,12 @@ const scout = (foco, label) => rodar('scout',
 
 const achados = []
 
-// --- o questionário: as perguntas vão para uma página no navegador (grill-with-ui, modo espera)
-// enquanto o resto do grafo trabalha. Um nó abre a página; outro espera as respostas.
-// Sem resposta em 45 min, ou página que não abriu: o grafo pausa (estado perguntas), como antes.
+// --- o painel: grilling e protótipo rodam num agente interativo num painel do Herdr ----------
+// O Herdr abre um painel ao lado da sessão, com um Claude interativo: o usuário conversa com ele
+// pela interface do próprio agente. O agente grava o contrato num arquivo, e o nó espera o arquivo
+// enquanto o resto do grafo trabalha. Sem Herdr, ou sem arquivo em 45 min: o grafo pausa
+// (estado perguntas) e a sessão pergunta pelo terminal.
 
-const GRILL = '~/.agents/skills/grill-with-ui'
 const RESPOSTAS = {
   type: 'object',
   properties: {
@@ -342,181 +343,75 @@ const RESPOSTAS = {
   },
   required: ['respostas'],
 }
-let nQuest = 0
-async function questionario(perguntas, rota, htmls = []) {
-  const n = nQuest++
-  const aberto = await ag(
-    `Abra um questionário no navegador com a skill grill-with-ui (${GRILL}/SKILL.md, seções "Questionnaire mode" e "Patching state.json"), sem esperar respostas.\n` +
-    `1. node ${GRILL}/server.mjs new --topic "orchestri: ${rota}" --doc "$TMPDIR/orchestri-q${n}.md" — guarde "session".\n` +
-    '2. UM patch com round 1 = TODAS as perguntas abaixo (ids q1..qN), cada uma com title, body, options (k/text) e rec {option ou text, why}; "agent": {"status":"waiting","handled":0}.\n' +
-    `3. nohup node ${GRILL}/server.mjs serve --session <session> > <session>/serve.log 2>&1 &  — e depois url --session <session>.\n` +
-    (htmls.length
-      ? `4. Protótipos para o usuário avaliar: ${htmls.join(' ')}. Copie o primeiro para <session>/visual.html e aplique o patch "visual": {"kind":"prototype","version":1,"stale":false,"thread":[],"note":"protótipo do ${rota}"} — ele aparece na página. Abra cada um no navegador (open <arquivo>).\n`
-      : '') +
-    `${htmls.length ? '5' : '4'}. open "<url>" (abre no navegador do usuário). Devolva session e url.\n\n` +
-    `PERGUNTAS:\n${texto(perguntas)}`,
-    { label: `questionario:${rota}.${n}`, phase: 'Questionário', model: 'sonnet',
-      schema: { type: 'object', properties: { session: { type: 'string' }, url: { type: 'string' } }, required: ['session', 'url'] } })
-  if (!aberto) return null
-  log(`questionário (${rota}): ${aberto.url} — responda na página; o resto do grafo segue trabalhando`)
+let nPainel = 0
+async function painel(nome, briefing, contrato, schema, phase) {
+  const n = nPainel++
+  const base = `$TMPDIR/orchestri-${nome}-${n}`
   const r = await ag(
-    `Você ESPERA as respostas do usuário no questionário já aberto. Siga "Wait mode", "Handling a send" e "Questionnaire mode" de ${GRILL}/SKILL.md.\n` +
-    `session: ${aberto.session}. Loop: pending → wait --session <s> --after <handled> --timeout 480 (o Bash tem teto de 10 min; exit 3 = espere de novo). ` +
-    'Cada send: patch working → aplique as actions (answer; thread: responda curto, com o contexto das perguntas; defer) → UM patch com "agent":{"status":"waiting","handled":<seq>}. Não crie rodadas.\n' +
-    'Pare quando todas estiverem answered ou deferred, ou na action finish; pare o servidor pelo pid em <session>/server.json. ' +
-    'No máximo 45 min no total: passou, pare e devolva o que tiver com parcial=true.\n' +
-    'Devolva cada pergunta: id, o texto da pergunta, a resposta (a opção escolhida com o texto dela, ou o texto livre), a opção e o status.\n\n' +
-    `PERGUNTAS (para o contexto das threads):\n${texto(perguntas)}`,
-    { label: `esperar:${rota}.${n}`, phase: 'Questionário', model: 'sonnet', schema: RESPOSTAS })
-  if (!r || r.parcial || !r.respostas?.length) return null
+    `Você é a PONTE para um painel do Herdr. Não faça o trabalho do painel: só abra, entregue o briefing e espere o resultado. Leia ~/.agents/skills/herdr/SKILL.md antes.\n` +
+    `1. test "$HERDR_ENV" = 1 — falhou: ok=false, motivo "fora do Herdr", e PARE.\n` +
+    `2. Grave o briefing abaixo, inteiro, em "${base}.md". O resultado vai em "${base}.json" (apague esse arquivo se já existir).\n` +
+    `3. herdr pane layout --current; abra um painel ao lado: herdr pane split --current --direction <right se o painel é largo, senão down> --cwd "${REPO ?? '$PWD'}" --no-focus. Guarde .result.pane.pane_id.\n` +
+    `4. herdr agent start ${nome.replace(/[^a-z0-9-]/gi, '-').toLowerCase().slice(0, 24)}-${n} --kind claude --pane <pane_id> -- --model claude-opus-5-5 (agent_not_ready: espere com herdr agent wait até idle).\n` +
+    `5. herdr agent prompt <agente> "Leia e siga ${base}.md. O usuário conversa com você neste painel." — sem --wait.\n` +
+    `6. herdr notification, se existir, avisando o usuário que o painel "${nome}" espera por ele.\n` +
+    `7. Espere o arquivo "${base}.json" em laços de até 8 min (until [ -f "${base}.json" ]; do sleep 15; done, com timeout; o Bash tem teto de 10 min). No máximo 45 min no total: passou, ok=false, motivo "sem resposta em 45 min".\n` +
+    `8. Leia o JSON e devolva o conteúdo em resultado, sem mudar nada, com ok=true e o pane_id. Não feche o painel: o usuário decide.\n\n` +
+    `--- BRIEFING ---\n${briefing}\n\nQuando terminar, grave em "${base}.json" um JSON neste formato, e só então diga ao usuário que ele pode voltar à sessão principal:\n${contrato}\n--- FIM ---`,
+    { label: `painel:${nome}.${n}`, phase, model: 'haiku',
+      schema: { type: 'object', properties: { ok: { type: 'boolean' }, motivo: { type: 'string' }, pane_id: { type: 'string' }, resultado: schema }, required: ['ok'] } })
+  if (!r?.ok) { log(`painel ${nome}: ${r?.motivo ?? 'a ponte não respondeu'}`); return null }
+  log(`painel ${nome}: respondido no painel ${r.pane_id ?? '?'}`)
+  return r.resultado ?? null
+}
+
+// O grilling: as perguntas vão para um Claude num painel, que conduz a conversa com o usuário.
+async function questionario(perguntas, rota) {
+  const r = await painel(`grill-${rota}`,
+    `Você conduz o GRILLING da orchestri (rota ${rota}) com o usuário, NESTE painel, pela sua própria interface. Siga ~/.agents/skills/grilling/SKILL.md e ~/.agents/skills/domain-modeling/SKILL.md.\n` +
+    'Faça as perguntas abaixo, cada uma com a recomendação dela como primeira opção (AskUserQuestion, até 4 por vez, ou conversa quando a pergunta pede texto livre). ' +
+    'Responda às dúvidas do usuário com o contexto das perguntas. Não crie perguntas novas: o que o usuário levantar de novo vai na resposta da pergunta mais próxima, como nuance. ' +
+    'Pergunta que o usuário adiar: status deferred. Não escreva código, não mude arquivo além do JSON de saída.\n\n' +
+    `PERGUNTAS:\n${texto(perguntas)}`,
+    '{"respostas":[{"id":"q1","pergunta":"<o title>","resposta":"<a opção escolhida com o texto dela, ou o texto livre, com a nuance>","opcao":"<k da opção, se houver>","status":"answered|deferred"}]}',
+    RESPOSTAS, 'Questionário')
+  if (!r?.respostas?.length) return null
   const dadas = r.respostas.filter((x) => x.status === 'answered')
   respostas.push(...dadas.map((x) => ({ pergunta: x.pergunta, resposta: x.resposta, rota })))
   return dadas
 }
 
-// O protótipo é do reach (Opus 5.5) e segue a skill prototype: um HTML descartável para o usuário
-// avaliar. Ele abre no navegador e aparece na página do questionário, como o visual do grill-with-ui.
-async function prototipo(p) {
-  // Tela: pasta própria, para o modo live da impeccable achar (ou criar) o contexto ao lado do HTML.
-  const arquivo = p.tipo === 'ui' ? `$TMPDIR/orchestri-prototipo-${p.ticket}/index.html` : `$TMPDIR/prototipo-${p.ticket}.html`
-  const r = await ag(
+// O protótipo: a skill prototype original, construída por um Claude num painel e publicada como
+// artifact do Claude. O usuário julga na conversa do painel; o veredito volta como resposta.
+async function prototipo(p, rota) {
+  const r = await painel(`proto-${p.ticket}`,
     `Ticket prototype ${p.ticket}: ${p.pergunta}\nTipo: ${p.tipo}. Onde: ${p.onde ?? '(decida pelo código)'}.\n\n` +
-    'Rode a skill prototype, ramo ' + (p.tipo === 'ui'
-      ? 'UI: UMA versão da tela, no contexto da app real quando a tela é de uma app existente (DESIGN.md, se existir). SEM variações próprias nem troca por ?variant= ou barra: esta tela vai para o modo live da impeccable, que gera as variações; recarregar a página derruba o live'
-      : 'LOGIC: a máquina de estados empurrada pelos casos difíceis, com botões livres e roteiros guiados em abas, mostrando o estado inteiro a cada ação') +
-    `. Entregue UM arquivo HTML autocontido (sem build, sem servidor) em "${arquivo}". Descartável e marcado como protótipo. ` +
-    'Devolva o caminho, uma linha do que ele mostra e o que o usuário deve julgar.',
-    { label: `prototype:${p.ticket}`, phase: 'Protótipo', agentType: 'reach', model: 'opus',
-      schema: { type: 'object', properties: { arquivo: { type: 'string' }, mostra: { type: 'string' }, julgar: { type: 'string' } }, required: ['arquivo', 'julgar'] } })
+    'Rode a skill prototype (~/.agents/skills/prototype/SKILL.md), no ramo que ela manda para este tipo, e entregue o protótipo como ARTIFACT do Claude: ' +
+    'um HTML autocontido publicado com a ferramenta Artifact (carregue a skill artifact-design antes). Mostre o link ao usuário e converse com ele neste painel até ele julgar; ajuste e publique de novo no mesmo artifact quando ele pedir.\n' +
+    'O artifact é publicado: NUNCA ponha dado real de cliente (nome, CPF, CNPJ, telefone, conta, valor de uma pessoa). Com dado de produção, use a FORMA (campos, distribuições, contagens) e troque os valores por fictícios.\n' +
+    'Não escreva código de produção e não commite.',
+    '{"artifact":"<url>","mostra":"<uma linha>","decisao":"<o que o usuário decidiu, numa frase>","comentarios":["<o que ele pediu ou apontou>"]}',
+    { type: 'object', properties: { artifact: { type: 'string' }, mostra: { type: 'string' }, decisao: { type: 'string' }, comentarios: { type: 'array', items: { type: 'string' } } }, required: ['decisao'] },
+    'Protótipo')
   linhas.push({ frente: `prototype:${p.ticket}`, papel: 'reach', harness: 'claude', modelo: 'claude-opus-5-5' })
-  if (!r) return null
-  return {
-    ticket: p.ticket, tipo: p.tipo, arquivo: r.arquivo, julgar: r.julgar,
-    pergunta: {
-      title: `${p.ticket} — ${p.pergunta}`,
-      body: `Protótipo: ${r.arquivo}${r.mostra ? ` — ${r.mostra}` : ''}\n\nJulgue: ${r.julgar}`,
-      options: [], rec: { text: 'Diga qual versão ou comportamento vale, e o que muda.', why: 'O protótipo existe para esta decisão.' },
-    },
-  }
+  if (!r?.decisao) return null
+  return { pergunta: `${p.ticket} — ${p.pergunta}`, resposta: `${r.decisao}${r.artifact ? ` · artifact: ${r.artifact}` : ''}${r.comentarios?.length ? ` · comentários: ${r.comentarios.join(' | ')}` : ''}`, rota }
 }
 
-// Protótipo de TELA: o usuário comenta direto no HTML pelo modo live da impeccable (selecionar,
-// comentar, desenhar, pedir variações, aceitar). Provado num subagente de workflow em 27/09/2026.
-const IMP = '~/.agents/skills/impeccable'
-async function live(pt) {
-  const r = await ag(
-    `Você atende o MODO LIVE da impeccable sobre o protótipo de tela ${pt.ticket} (${pt.arquivo}). Leia ${IMP}/reference/live.md inteiro antes.\n` +
-    `O usuário vai julgar: ${pt.julgar}\n` +
-    `0. Sessões velhas: ${IMP}/scripts/impeccable live-status; feche cada activeSessions com live-complete --id <id> (uma por vez) — sessão velha deixa aviso na página e confunde o usuário.\n` +
-    `1. Boot: cd <pasta do HTML> && ${IMP}/scripts/impeccable live --target ${pt.arquivo}. ` +
-    'Com context_missing (PRODUCT.md, DESIGN.md) numa pasta de protótipo FORA do repositório, escreva os dois mínimos ao lado do HTML, tirados do próprio HTML; dentro do repositório, nunca crie: use --target dentro da app que já tem os dois. ' +
-    `Com config_missing, escreva a config de ${IMP}/reference/live-setup.md (files ["index.html"], insertBefore "</body>", commentSyntax "html", cspChecked true). Rode o boot de novo.\n` +
-    '2. Sirva o HTML por http numa porta livre (python3 -m http.server <porta> --bind 127.0.0.1, em background) e abra no navegador do usuário: open "<url>".\n' +
-    `3. Poll em PRIMEIRO PLANO: ${IMP}/scripts/impeccable live-poll com o timeout padrão (o Bash tem teto de 10 min; timeout = poll de novo). Aqui não chega notificação de background.\n` +
-    '4. Atenda cada evento como live.md manda (generate, steer, accept, discard, manual_edit_apply, variant_mount_failed, prefetch), seguindo os _instructions, e volte ao poll.\n' +
-    '5. Pare no exit, ou depois de 45 min no total (aí parcial=true). Rode o Cleanup de live.md, feche a sua sessão com live-complete e pare o http.server.\n' +
-    'Se o usuário perguntar como selecionar: botão Pick, clique no elemento, ação ou pedido no campo do elemento, Go. Insert põe um bloco novo; a caixa Steer é conversa e não gera variação.\n' +
-    'Devolva cada evento (tipo, elemento, o que o usuário comentou ou pediu, o que você fez), o que foi aceito e a decisão que o usuário deixou, em uma frase. ' +
-    'SEMPRE termine chamando o contrato de saída — inclusive no tempo esgotado ou em erro, com parcial=true e os eventos que já tiver: sair sem o contrato faz o workflow refazer o nó do zero, e os eventos atendidos se perdem (aconteceu em 27/09/2026).',
-    { label: `live:${pt.ticket}`, phase: 'Protótipo', model: 'opus',
-      schema: { type: 'object', properties: {
-        eventos: { type: 'array', items: { type: 'object', properties: { tipo: { type: 'string' }, elemento: { type: 'string' }, usuario: { type: 'string' }, feito: { type: 'string' } }, required: ['tipo'] } },
-        aceito: { type: 'array', items: { type: 'string' } },
-        decisao: { type: 'string' },
-        parcial: { type: 'boolean' },
-      }, required: ['eventos', 'decisao'] } })
-  linhas.push({ frente: `live:${pt.ticket}`, papel: 'reach', harness: 'claude', modelo: 'claude-opus-5-5' })
-  if (!r || r.parcial || !r.eventos?.length) return null
-  const comentarios = r.eventos.filter((e) => e.usuario).map((e) => `${e.tipo}${e.elemento ? ` em ${e.elemento}` : ''}: ${e.usuario}`)
-  return { pergunta: pt.pergunta.title, resposta: `${r.decisao}${r.aceito?.length ? ` · aceito: ${r.aceito.join('; ')}` : ''}${comentarios.length ? ` · comentários: ${comentarios.join(' | ')}` : ''}` }
-}
-
-// GAUNTLET VISUAL do protótipo de tela: a régua é uma REFERÊNCIA REAL com nome, que dá para abrir
-// e pôr lado a lado. O reach propõe, o usuário escolhe, e um crítico duro compara às cegas.
-async function referencias(pt) {
-  const r = await ag(
-    `Protótipo de tela ${pt.ticket}: ${pt.pergunta}\n\nProponha 2 ou 3 REFERÊNCIAS para comparar este protótipo, a mais difícil que dá para alcançar primeiro. Cada uma tem de ser: ` +
-    'NOMEADA (uma coisa específica, não uma categoria: "a tela de extrato do Nubank", não "apps bons"); ABRÍVEL (URL pública, ou uma rota/arquivo local já servido — o crítico precisa tirar print dela); COMPARÁVEL (dá para pôr lado a lado com o protótipo e escolher uma). Recomende uma.',
-    { label: `referencias:${pt.ticket}`, phase: 'Protótipo', agentType: 'reach', model: 'opus',
-      schema: { type: 'object', properties: { candidatas: { type: 'array', items: { type: 'object', properties: { nome: { type: 'string' }, onde: { type: 'string' }, porque: { type: 'string' } }, required: ['nome', 'onde'] } }, recomendada: { type: 'string' } }, required: ['candidatas'] } })
-  if (!r?.candidatas?.length) return null
-  return {
-    title: `${pt.ticket} — referência para comparar às cegas`,
-    body: `O protótipo vai ser comparado às cegas com uma referência real, até ganhar dela. Qual?\n\n${r.candidatas.map((c, i) => `${String.fromCharCode(65 + i)}) ${c.nome} — ${c.onde}${c.porque ? ` (${c.porque})` : ''}`).join('\n')}`,
-    options: r.candidatas.map((c, i) => ({ k: String.fromCharCode(65 + i), text: `${c.nome} — ${c.onde}` })),
-    rec: { option: String.fromCharCode(65 + Math.max(0, r.candidatas.findIndex((c) => c.nome === r.recomendada))), why: 'A mais difícil que o crítico consegue abrir.' },
-  }
-}
-
-const MAX_VISUAL = 3
-async function gauntletVisual(pt, referencia) {
-  for (let v = 0; ; v++) {
-    // A e B trocam de lado a cada volta, em código: o crítico nunca sabe qual é o nosso.
-    const nossoEhA = v % 2 === 0
-    const base = `$TMPDIR/orchestri-gv-${pt.ticket}-${v}`
-    const cap = await ag(
-      `Tire dois prints no MESMO tamanho (1440x900), com o playwright-cli, sem abrir nada além disto:\n` +
-      `- a referência: ${referencia} → salve em "${base}-${nossoEhA ? 'B' : 'A'}.png"\n` +
-      `- o protótipo: file://${pt.arquivo} → salve em "${base}-${nossoEhA ? 'A' : 'B'}.png"\n` +
-      'Feche o navegador. Devolva os dois caminhos e se os dois prints saíram. Referência que não abre: ok=false e a mensagem.',
-      { label: `captura:${pt.ticket}.${v}`, phase: 'Protótipo', model: 'haiku',
-        schema: { type: 'object', properties: { a: { type: 'string' }, b: { type: 'string' }, ok: { type: 'boolean' }, mensagem: { type: 'string' } }, required: ['ok'] } })
-    if (!cap?.ok) return { comparado: false, motivo: `a referência não abriu: ${cap?.mensagem ?? 'sem resposta'}` }
-    const crit = await ag(
-      `Você é um crítico DURO. Elogio não serve. Olhe as duas imagens, A: ${cap.a} e B: ${cap.b}, e escolha a melhor para isto: ${pt.julgar}. ` +
-      'Você não sabe de onde veio nenhuma das duas, e não tente descobrir. Julgue só o que vê: hierarquia, densidade, legibilidade, acabamento. Devolva a vencedora e o que a PERDEDORA precisa mudar para ganhar, em pontos concretos sobre a imagem.',
-      { label: `critico:${pt.ticket}.${v}`, phase: 'Protótipo', model: 'fable',
-        schema: { type: 'object', properties: { vencedora: { type: 'string', enum: ['A', 'B'] }, porque: { type: 'string' }, mudar: { type: 'array', items: { type: 'string' } } }, required: ['vencedora', 'porque'] } })
-    linhas.push({ frente: `critico:${pt.ticket}.${v}`, papel: 'monitoring', harness: 'claude', modelo: 'claude-fable-5-1' })
-    if (!crit) return { comparado: false, motivo: 'o crítico não respondeu' }
-    const ganhamos = (crit.vencedora === 'A') === nossoEhA
-    if (ganhamos) return { comparado: true, venceu: true, voltas: v, referencia, porque: crit.porque }
-    if (v >= MAX_VISUAL) return { comparado: true, venceu: false, voltas: v, referencia, falta: crit.mudar ?? [crit.porque] }
-    log(`${pt.ticket}: perdeu para a referência às cegas (volta ${v + 1}) — o Opus melhora o protótipo`)
-    await ag(
-      `Melhore o protótipo ${pt.arquivo} para ganhar de uma referência real numa comparação às cegas. O crítico disse o que falta:\n${texto(crit.mudar ?? [crit.porque])}\n\n` +
-      'Aplique no próprio HTML, mantendo UMA versão só e o que o usuário já aceitou no modo live. Não copie a referência: resolva o que o crítico apontou.',
-      { label: `melhora:${pt.ticket}.${v}`, phase: 'Protótipo', agentType: 'reach', model: 'opus' })
-  }
-}
-
-// Perguntas e scouts saem JUNTOS: você responde enquanto os scouts buscam. Os protótipos ficam
-// prontos antes do questionário, porque a pergunta deles aponta para o artefato.
+// Perguntas, protótipos e scouts saem JUNTOS: cada painel espera o usuário enquanto os scouts buscam.
 async function perguntarEBuscar(perguntas, buscas, rota, prototipos = []) {
-  let pendentes = perguntas ?? []   // o que a pausa mostra se a página ou o live falhar
-  const [dadas, novos] = await parallel([
-    async () => {
-      const pq = prototipos.length ? (await parallel(prototipos.map((p) => () => prototipo(p)))).filter(Boolean) : []
-      const telas = pq.filter((x) => x.tipo === 'ui')
-      const logicas = pq.filter((x) => x.tipo !== 'ui')
-      // cada tela ganha a pergunta "qual referência?" no mesmo questionário
-      const refs = (await parallel(telas.map((x) => () => referencias(x)))).map((q, i) => (q ? { tela: telas[i], q } : null)).filter(Boolean)
-      const todas = [...logicas.map((x) => x.pergunta), ...refs.map((r) => r.q), ...(perguntas ?? [])]
-      pendentes = [...telas.map((x) => x.pergunta), ...todas]
-      // Telas no modo live e o resto no questionário, ao mesmo tempo: o usuário escolhe por onde começa.
-      const [dadas, lives] = await parallel([
-        () => (todas.length ? questionario(todas, rota, logicas.map((x) => x.arquivo)) : Promise.resolve([])),
-        () => parallel(telas.map((x) => () => live(x))),
-      ])
-      if (todas.length && !dadas) return null
-      if ((lives ?? []).some((x) => !x)) return null
-      const dasTelas = (lives ?? []).map((x) => ({ ...x, rota }))
-      // gauntlet visual: depois do live (o HTML já tem o que o usuário aceitou) e da referência escolhida
-      const visuais = await parallel(refs.map(({ tela, q }) => async () => {
-        const escolha = (dadas ?? []).find((d) => d.pergunta === q.title || d.pergunta?.startsWith(tela.ticket))
-        if (!escolha) return null
-        const opcao = q.options.find((o) => o.k === escolha.opcao)
-        const g = await gauntletVisual(tela, opcao ? opcao.text : escolha.resposta)
-        return { pergunta: `${tela.ticket} — comparação às cegas`, resposta: g.comparado ? (g.venceu ? `venceu ${g.referencia} às cegas na volta ${g.voltas} (${g.porque})` : `não venceu ${g.referencia} em ${MAX_VISUAL} voltas; falta: ${(g.falta ?? []).join('; ')}`) : `não comparado: ${g.motivo}`, rota }
-      }))
-      const dosVisuais = (visuais ?? []).filter(Boolean)
-      respostas.push(...dasTelas, ...dosVisuais)
-      return [...(dadas ?? []), ...dasTelas, ...dosVisuais]
-    },
+  const [dadas, protos, novos] = await parallel([
+    () => (perguntas?.length ? questionario(perguntas, rota) : Promise.resolve([])),
+    () => parallel(prototipos.map((p) => () => prototipo(p, rota))),
     () => (buscas?.length ? parallel(buscas.map((b) => () => scout(b.pergunta, b.label))) : Promise.resolve([])),
   ])
   achados.push(...(novos ?? []).filter(Boolean))
-  return (perguntas?.length || prototipos.length) && !dadas ? { pausa: pendentes } : { ok: true }
+  const julgados = (protos ?? []).filter(Boolean)
+  respostas.push(...julgados)
+  // O que a pausa mostra: as perguntas sem resposta e os protótipos que ninguém julgou.
+  const semProto = prototipos.filter((p, i) => !(protos ?? [])[i]).map((p) => ({ title: `${p.ticket} — ${p.pergunta}`, body: `Protótipo (${p.tipo}) que não foi julgado no painel.`, options: [] }))
+  const pendentes = [...(perguntas?.length && !dadas ? perguntas : []), ...semProto]
+  return pendentes.length ? { pausa: pendentes } : { ok: true }
 }
 
 // Não aja antes de o usuário confirmar o entendimento (regra da skill grilling).
