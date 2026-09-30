@@ -25,7 +25,8 @@ Jev ──┤              │ sem névoa                                 ├─
 - **Grande → to-map.** O mapa fica no grafo, **sem publicar** no tracker. Cada ticket `research` do mapa vira um **scout dirigido** — com a pergunta exata que uma decisão espera —, e o mapa roda de novo com os achados, até fechar (teto de 3). Tickets `grilling` viram perguntas ao usuário; `prototype` e `task` param em humano.
 - **Pequena → scouts em ângulos fixos** (código, decisões, comportamento) **e o grilling**: o que precisa estar decidido antes da spec. As perguntas voltam ao usuário (`estado: perguntas`).
 - **As perguntas vão para um painel do Herdr.** O grafo abre um painel ao lado da sessão, com um Claude interativo (Opus 5.5) que conduz o grilling com você pela interface dele: todas as perguntas da rodada, cada uma com a recomendação. **Enquanto você responde, os scouts da mesma rodada rodam.** O agente do painel grava as respostas num arquivo, e o nó do grafo espera esse arquivo.
-- **Confirmação antes da spec:** quando o grilling ou o mapa fecha, o grafo mostra o resumo e pergunta se o entendimento está certo. "Não" com a correção no texto refaz a rodada; só "sim" segue para o `to-spec`.
+- **Todo mapa passa pela janela principal**, a pedido do Flávio (30/09/2026): antes de abrir qualquer painel, o grafo para em `estado: mapa`, e a sessão mostra o mapa e pede aprovação. Mapa aprovado e sem pendências é a confirmação antes da spec. No grilling (tarefa pequena), a confirmação continua num painel.
+- **Confirmação antes da spec:** "não" com a correção no texto refaz a rodada; só "sim" segue para o `to-spec`.
 - **O grilling roda com a `domain-modeling`**, como o ticket grilling do `to-map` manda.
 - **Tickets `prototype` do mapa abrem outro painel do Herdr**, com um Claude que roda a skill `prototype` original (o ramo que ela manda: lógica ou tela) e publica o protótipo como **artifact do Claude**. Você abre o link, conversa no painel e julga; a decisão e os comentários voltam ao mapa como resposta. Grilling, protótipos e scouts rodam **ao mesmo tempo**.
 - **Artifact é publicado: nunca leva dado real de cliente.** Com dado de produção, o protótipo usa a forma (campos, distribuições, contagens) com valores fictícios.
@@ -79,6 +80,7 @@ Jev ──┤              │ sem névoa                                 ├─
 
 | `estado` | O que fazer |
 | --- | --- |
+| `mapa` | **Mostre o mapa na janela principal e peça aprovação** (AskUserQuestion). Mostre, nesta ordem: `onde` (a rodada), o destino, as fatias em ordem, as decisões novas, os painéis que vão abrir (`abre`: nome e para quê) e os scouts em segundo plano (`scouts`). "Sim": some `{ pergunta: "Aprovação do mapa", resposta: "sim", rota: "aprovacao", mapa: <assinatura> }` em `respostas` e retome. Correção: some a correção com `rota: "to-map"` (o mapa refaz com ela) e retome. **A cada notificação do grafo, mostre de novo o mapa atualizado**, com o nó em que ele está |
 | `perguntas` | **Só quando o painel falhou**: a sessão está fora do Herdr, o painel não abriu, ou ficou 45 min sem resposta. Vêm do `grilling`, do `to-map` ou do `to-spec` (o campo `rota` diz qual). Pergunte ao usuário (AskUserQuestion), com a recomendação do reach como primeira opção. Some as respostas em `respostas`, cada uma como `{ pergunta, resposta, rota }` — resposta com `rota: "to-spec"` não reabre o grilling nem o mapa e **retome**: `Workflow({ scriptPath, resumeFromRunId: runId, args: { tarefa, flags, respostas } })` — os nós anteriores voltam do cache |
 | `critico` | Mostre a spec e o motivo. Com o ok do usuário, retome com `autorizar_critico: true` |
 | `humano` | Pare. Mostre o motivo, os tickets `entregues` e o que ficou aberto; o usuário decide |
@@ -98,6 +100,8 @@ Quando algum ticket toca tela (o código decide pelos arquivos: `.tsx`, `.jsx`, 
 
 O grilling e os protótipos saíram do navegador em 30/09/2026, a pedido do Flávio: a página do `grill-with-ui`, o modo live da `impeccable` e o gauntlet visual deram lugar a painéis do Herdr.
 
+- **Painel só existe onde o usuário intervém:** grilling e protótipo. Scouts, spec, implement e monitoring rodam em segundo plano.
+- **O nome do painel diz a função:** `Grilling · <rota>` ou `Protótipo · <ticket>` (`herdr pane rename`).
 - **Um nó `painel:<nome>` por conversa.** Uma ponte (Haiku) confere `HERDR_ENV`, grava o briefing num arquivo, abre o painel com `herdr pane split --current --no-focus`, inicia um Claude (`herdr agent start … --kind claude -- --model claude-opus-5-5`) e entrega o briefing com `herdr agent prompt`.
 - **O contrato volta por arquivo.** O agente do painel grava um JSON ao terminar; a ponte espera o arquivo em laços de até 8 min (o Bash tem teto de 10 min), até 45 min no total.
 - **O painel fica aberto** no fim: quem fecha é você.

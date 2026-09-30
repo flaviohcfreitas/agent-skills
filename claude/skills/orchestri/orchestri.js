@@ -270,7 +270,11 @@ if (!plano) {
 }
 const respostas = [...(args?.respostas ?? [])]   // cresce com cada questionário respondido
 // Resposta a pergunta do to-spec não reabre o grilling nem o mapa: cada resposta leva a rota de origem.
-const respostasDescoberta = () => respostas.filter((r) => r?.rota !== 'to-spec')
+const respostasDescoberta = () => respostas.filter((r) => r?.rota !== 'to-spec' && r?.rota !== 'aprovacao')
+// O mapa passa pela janela principal antes de abrir painel: a aprovação casa pela assinatura do mapa.
+const assinatura = (m) => { const t = JSON.stringify([m.destino, m.fatias, m.perguntas, m.research, m.prototipos, m.humano]); let h = 5381; for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0; return h.toString(36) }
+const aprovado = (m) => respostas.some((r) => r?.rota === 'aprovacao' && r.mapa === assinatura(m) && /^\s*sim/i.test(r.resposta ?? ''))
+const paineisDo = (m) => [...(m.perguntas?.length ? [{ painel: 'Grilling · to-map', para: `${m.perguntas.length} pergunta(s) para você` }] : []), ...(m.prototipos ?? []).map((p) => ({ painel: `Protótipo · ${p.ticket}`, para: p.pergunta }))]
 const MAX_VOLTAS_TICKET = 2   // refaz por ticket
 const MAX_RODADAS = 3         // reach → implement → monitoring, até a tarefa fechar
 // Regra que protege dinheiro fica em código: o tema marca o crítico, diga o reach o que disser.
@@ -550,15 +554,17 @@ for (let volta = 0; volta < 2 && !entendimento; volta++) {
         break
       }
       if (m.humano?.length) return fim('humano', { motivo: `o mapa tem ticket que é do usuário: ${m.humano.map((h) => `${h.ticket} (${h.tipo}): ${h.o_que}`).join('; ')}`, mapa: m })
+      const onde = `to-map ${volta}.${rodadaMapa}`
+      log(`mapa ${onde}: ${(m.fatias ?? []).map((f) => f.nome).join(' → ')}; painéis: ${paineisDo(m).map((x) => x.painel).join(', ') || 'nenhum'}; scouts: ${m.research?.length ?? 0}`)
+      // Todo mapa vai à janela principal e espera aprovação: o usuário vê onde estamos e o que vai abrir.
+      if (!aprovado(m)) return fim('mapa', { mapa: m, assinatura: assinatura(m), onde, abre: paineisDo(m), scouts: (m.research ?? []).map((x) => x.ticket) })
       if (m.research?.length || m.perguntas?.length || m.prototipos?.length) {
         log(`to-map: ${m.research?.length ?? 0} scout(s) dirigido(s), ${m.perguntas?.length ?? 0} pergunta(s), ${m.prototipos?.length ?? 0} protótipo(s) — em paralelo`)
         const r = await perguntarEBuscar(m.perguntas, (m.research ?? []).map((x) => ({ pergunta: x.pergunta, label: `scout:${x.ticket}` })), 'to-map', m.prototipos ?? [])
         if (r.pausa) return fim('perguntas', { perguntas: r.pausa, rota: 'to-map', mapa: m })
         continue
       }
-      const c = await confirmar(m, 'to-map')
-      if (c.pausa) return fim('perguntas', { perguntas: c.pausa, rota: 'to-map', mapa: m })
-      if (c.corrigir !== undefined) { log('to-map: o usuário corrigiu o entendimento'); continue }
+      // aprovado na janela principal e sem pendências: é a confirmação antes da spec
       entendimento = m
     }
     if (grande && !entendimento) return fim('humano', { motivo: 'o to-map rodou cinco vezes sem fechar o mapa' })
