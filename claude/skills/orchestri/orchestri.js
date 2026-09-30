@@ -347,11 +347,13 @@ let nPainel = 0
 async function painel(nome, briefing, contrato, schema, phase) {
   const n = nPainel++
   const base = `$TMPDIR/orchestri-${nome}-${n}`
+  // O nome do painel diz a função dele: Grilling · <rota> ou Protótipo · <ticket>.
+  const rotulo = nome.replace(/^grill-/, 'Grilling · ').replace(/^proto-/, 'Protótipo · ').slice(0, 48)
   const r = await ag(
     `Você é a PONTE para um painel do Herdr. Não faça o trabalho do painel: só abra, entregue o briefing e espere o resultado. Leia ~/.agents/skills/herdr/SKILL.md antes.\n` +
     `1. test "$HERDR_ENV" = 1 — falhou: ok=false, motivo "fora do Herdr", e PARE.\n` +
     `2. Grave o briefing abaixo, inteiro, em "${base}.md". O resultado vai em "${base}.json" (apague esse arquivo se já existir).\n` +
-    `3. herdr pane layout --current; abra um painel ao lado: herdr pane split --current --direction <right se o painel é largo, senão down> --cwd "${REPO ?? '$PWD'}" --no-focus. Guarde .result.pane.pane_id. Dê o nome ao painel: herdr pane rename <pane_id> "${nome.slice(0, 48)}".\n` +
+    `3. herdr pane layout --current; abra um painel ao lado: herdr pane split --current --direction <right se o painel é largo, senão down> --cwd "${REPO ?? '$PWD'}" --no-focus. Guarde .result.pane.pane_id. Dê o nome ao painel: herdr pane rename <pane_id> "${rotulo}".\n` +
     `4. herdr agent start ${nome.replace(/[^a-z0-9-]/gi, '-').toLowerCase().slice(0, 24)}-${n} --kind claude --pane <pane_id> -- --model claude-opus-5-5 (agent_not_ready: espere com herdr agent wait até idle).\n` +
     `5. herdr agent prompt <agente> "Leia e siga ${base}.md. O usuário conversa com você neste painel." — sem --wait.\n` +
     `6. herdr notification, se existir, avisando o usuário que o painel "${nome}" espera por ele.\n` +
