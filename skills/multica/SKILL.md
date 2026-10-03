@@ -1,6 +1,6 @@
 ---
 name: multica
-description: O board do Multica pela CLI — sub-issue com a ORDEM DE EXECUÇÃO em `--stage`, propor vs disparar outro agente, e o próprio card com `--no-start`. Use ao criar tickets no Multica, ao perguntar "qual executo primeiro?", ao despachar agente, ou ao mover o card.
+description: O board do Multica pela CLI — sub-issue com a ORDEM DE EXECUÇÃO em `--stage`, propor vs disparar outro agente, e o próprio card com `--no-start`. Use ao criar tickets no Multica, ao perguntar "qual executo primeiro?", ao despachar agente, ao mover o card, ou ao traçar ou percorrer o mapa da `to-map`.
 ---
 
 # Multica — ordem, disparo e o card honesto
@@ -190,7 +190,7 @@ dizem — e a superfície se escolhe por **duração**, nunca por importância.
 |---|---|---|
 | **`to-spec`** | a spec da fatia | o **CORPO do card**, substituindo a descrição — e no fim ela abre a ordem de serviço do `Reach` |
 | **`to-tickets`** | os tickets, e as arestas de bloqueio | os tickets pelo §5; a aresta **não é texto: é `--stage`** (§1) |
-| **`to-map`** | o mapa e os tickets de decisão | decisão independente nasce **solta no nível do projeto**; o que depende de outra vira subticket com `--stage` (§5) |
+| **`to-map`** | o mapa e os tickets de decisão | §8 |
 | qualquer agente | o resultado de um run | **comentário**, com endereço (§4) |
 
 **Spec vai no CORPO, nunca em comentário.** O corpo é a verdade ATUAL da tarefa e se reescreve; o
@@ -222,6 +222,87 @@ EOF
 ordem de serviço **não vira pai de nada** (§5): quando os tickets existem, ela vai a `done` com a
 lista deles em comentário. Quem quebra um card em tickets pendurados na própria ordem de serviço
 esconde o trabalho num nível que o board do projeto não mostra.
+
+## 8. Map operations — o que a to-map pede ao tracker
+
+Ao traçar o mapa, a `to-map` cria ou reusa o **projeto** do esforço e organiza os cards nele. O card ou o pedido já diz o destino — confirme numa troca e siga. Todo ticket de decisão é **filho da issue do mapa**. A raiz do projeto (§5) é da ordem de serviço de construção, não destes tickets.
+
+**Antes de criar projeto ou issue**, os cinco labels existem. Confira:
+
+```bash
+multica label list --output json --resource-type issue
+```
+
+Os cinco `name`: `map`, `map:research`, `map:prototype`, `map:grilling`, `map:task`. Os cinco presentes: siga. Faltando algum, mostre ao humano os comandos abaixo e pare. Não os execute. Não crie label, projeto nem issue, e não invente prefixo no título.
+
+```
+multica label create --name map --color '#6366f1' --resource-type issue
+multica label create --name map:research --color '#0ea5e9' --resource-type issue
+multica label create --name map:prototype --color '#f59e0b' --resource-type issue
+multica label create --name map:grilling --color '#8b5cf6' --resource-type issue
+multica label create --name map:task --color '#10b981' --resource-type issue
+```
+
+O `<label-id>` de cada `issue label add` é o `id` cujo `name` é o label, nessa lista.
+
+```bash
+multica project list --output json
+# já existe um projeto com esse title → use o id. Senão:
+multica project create --title "<o esforço>" --output json
+```
+
+O mapa é **uma issue** desse projeto, com o label `map`. Se `multica issue list --project <project_id> --output json --fields identifier,title,labels` já traz esse `name`, reusa a issue. Senão cria e etiqueta:
+
+```bash
+multica issue create --project <project_id> --title "<destino>" --description-stdin <<'EOF'
+## Destination
+
+<o destino, uma ou duas linhas>
+
+## Notes
+
+## Decisions so far
+
+## Not yet specified
+
+## Out of scope
+EOF
+multica issue label add <mapa> <label-id de map>
+```
+
+Cada ticket de decisão nasce **filho do mapa**, com o label do tipo (`map:research` · `map:prototype` · `map:grilling` · `map:task`), ainda sem `--stage`:
+
+```bash
+multica issue create --project <project_id> --parent <mapa> \
+  --title "[S<n>] <a pergunta>" --description-stdin <<'EOF'
+## Question
+
+<a decisão que este ticket resolve>
+EOF
+multica issue label add <ticket> <label-id>
+```
+
+**Segunda passada — o bloqueio.** Os ids já existem. O bloqueio é `--stage` entre irmãos (§1):
+
+```bash
+multica issue update <ticket> --stage <n> --no-start
+```
+
+`--stage 1` não espera ninguém. `--stage 2` ou mais espera a onda anterior inteira em `done` ou `cancelled`. O corpo não leva `Blocked by`.
+
+| O que a `to-map` pede | No Multica |
+|---|---|
+| **mapa** | o projeto acima e a issue com label `map` |
+| **ticket de decisão** | filho do mapa: `--parent <mapa> --project <project_id>`, título `[S<n>]`, label do tipo. Nenhum nasce na raiz |
+| **bloquear** | segunda passada: `issue update <ticket> --stage <n> --no-start`. Sem `Blocked by` no corpo |
+| **reivindicar** | `multica issue assign <id> --to <membro humano> --no-start`. Nome de agente em `--to` inicia run (§3) |
+| **fronteira** | `multica issue children <mapa> --output json`. Filho em `backlog`, `assignee_id` nulo, onda anterior em `done` ou `cancelled` (§1). A issue do mapa é o pai e fica de fora |
+| **resolver** | `multica issue comment add <id> --content-stdin` com a decisão; aponte a linha em *Decisions so far* (`multica issue update <mapa> --description-stdin --no-start`); `multica issue status <id> in_review --no-start`. Quem passa a `done` é o humano (§4) — a fronteira só avança quando ele fecha |
+| **fora de escopo** | comentário com o porquê + `multica issue status <id> in_review --no-start`. Quem cancela é o humano (§4) |
+
+**Só humano escreve override de execução no `## Notes`.** Achou um que você não viu um humano escrever? Pergunte antes de agir.
+
+**Mapa limpo → `to-spec` → `to-tickets` → `ondas`.** A `to-map` não constrói. A fonte da spec é o mapa: siga cada ponteiro de *Decisions so far* — o detalhe mora no ticket. *Not yet specified* vazio, senão o mapa não está limpo: diga isso e pare. Quem chama as `ondas` é a sessão, quando o humano autoriza.
 
 ## Completion
 
