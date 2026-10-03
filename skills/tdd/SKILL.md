@@ -36,3 +36,7 @@ When the shape of that interface is itself in question (how deep the module is, 
 - **Red before green.** Write the failing test first, then only enough code to pass it. Don't anticipate future tests or add speculative features.
 - **One slice at a time.** One seam, one test, one minimal implementation per cycle.
 - **Refactoring is not part of the loop.** It belongs to the review stage (see the `code-review` skill), not the red → green implementation cycle.
+
+## Completion gate
+
+After the final green slice and the checks appropriate to the whole requested change, run the global Jev gate once from the project root: `node ~/.agents/skills/decision-gate/scripts/juiz.mjs --gate --spec-arquivo <acceptance-criteria> --verificar-saida <verification-output>`. Use the actual requested behavior as the criteria and captured output from checks you ran. Ensure the diff includes all changed and new files; use `--diff-arquivo <complete-diff>` if `git diff HEAD` is incomplete. Do not call the gate on each red/green cycle: a partial slice is not the final delivery. Exit `0` permits review after checking the evidence yourself; `2` means fix the objective gap and rerun checks (at most two rework attempts); `3` needs the principal's judgment or a user decision if outside the authorized scope; `1` means Jev did not judge, so verify manually and say so. When /implement owns the same delivery, share this gate result with it rather than running a second paid judgment. Tests and review remain necessary.

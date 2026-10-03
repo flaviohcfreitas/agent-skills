@@ -73,6 +73,8 @@ If the spec is missing, skip the Spec sub-agent and note this in the final repor
 
 ### 5. Aggregate
 
+Before aggregating, run the global Jev `--saida` once per returned sub-agent report, using its exact prompt as `--brief-arquivo` and its report as `--saida-arquivo`. Follow `~/.agents/skills/decision-gate/SKILL.md` for the veredict and error handling; fix an objectively incomplete report before presenting it. Jev checks whether the report follows its brief, not whether a code finding is correct. If an orchestration skill already judged the same report, reuse that result.
+
 Present the two reports under `## Standards` and `## Spec` headings, verbatim or lightly cleaned. Do **not** merge or rerank findings, because the two axes are deliberately separate (see _Why two axes_).
 
 End with a one-line summary: total findings per axis, and the worst issue _within each axis_ (if any). Don't pick a single winner across axes: that's the reranking the separation exists to prevent.

@@ -1,7 +1,6 @@
 ---
 name: teach
-description: Teach the user a new skill or concept, within this workspace.
-disable-model-invocation: true
+description: Teach the user a topic over multiple sessions, as a course kept in their Second Brain vault. Use when the user says they want to learn something ("quero aprender X", "me ensina X"), or resumes a course.
 argument-hint: "What would you like to learn about?"
 ---
 
@@ -9,7 +8,28 @@ The user has asked you to teach them something. This is a stateful request - the
 
 ## Teaching Workspace
 
-Treat the current directory as a teaching workspace. The state of their learning is captured in this directory in several files:
+The workspace is a **course folder in the user's Second Brain vault**, never the current directory:
+
+```
+<vault>/Areas/<area>/cursos/<topic-slug>/
+```
+
+`<vault>` is `$SECOND_BRAIN_PATH`, else `/home/box/Second Brain` (VM), else `~/Second Brain` (Mac): the first that exists. No vault found: stop and tell the user. `<topic-slug>` is lowercase-with-hyphens.
+
+Pick `<area>` in this order, first match wins:
+
+1. The session runs inside the `menos-juros` repo, or the topic is about MenosJuros → `Menos Juros`.
+2. Theology, the Bible, preaching → `Teologia`.
+3. Technology, AI, engineering → `Profissional`.
+4. None fits → ask the user which area; create no new area on your own.
+
+Before creating a course, look for an existing one on the same topic with the Obsidian CLI, scoped to the area (`obsidian search query="<topic>" path="Areas/<area>/cursos"`), and resume it. Every `.md` file you create starts with the vault's frontmatter (`title`, `tipo: curso`, `atualizado`, `agente`, `fontes`, `confianca`). Each session that writes to the course appends one line to `<vault>/Memoria/log.md`:
+
+```
+- HH:MM · <agent> · criou|atualizou · `Areas/<area>/cursos/<topic-slug>/<file>` · motivo curto
+```
+
+The state of their learning is captured in the course folder in several files:
 
 - `MISSION.md`: A document capturing the _reason_ the user is interested in the topic. This should be used to ground all teaching. Use the format in [MISSION-FORMAT.md](./MISSION-FORMAT.md).
 - `./reference/*.html`: A directory of reference materials. These are the compressed learnings from the lessons - cheat sheets, reference algorithms, syntax, yoga poses, glossaries. They are the raw units of learning. They should be beautiful documents which print out well, and are designed for quick reference.

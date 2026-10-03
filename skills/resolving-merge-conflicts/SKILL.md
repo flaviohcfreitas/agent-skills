@@ -11,4 +11,6 @@ description: "Use when you need to resolve an in-progress git merge/rebase confl
 
 4. Discover the project's **automated checks** and run them, typically typecheck, then tests, then format. Fix anything the merge broke.
 
-5. **Finish the merge/rebase.** Stage everything and commit. If rebasing, continue the rebase process until all commits are rebased.
+5. **Judge the resolution before finishing.** If the merge changes code, run the global Jev `--gate` with the two sides' intended behavior as `--spec-arquivo`, the check output as `--verificar-saida`, and a diff that actually contains the resolution (`--diff-arquivo` when `git diff HEAD` does not). Follow `~/.agents/skills/decision-gate/SKILL.md` for `passou`/`refaz`/`humano`/error; inspect the resolution yourself even on `passou`. Reuse a gate already run on the same final change.
+
+6. **Finish the merge/rebase.** Stage everything and commit. If rebasing, continue the rebase process until all commits are rebased.

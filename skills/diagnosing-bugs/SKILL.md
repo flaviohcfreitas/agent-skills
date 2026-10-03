@@ -136,3 +136,5 @@ Required before declaring done:
 - [ ] All `[DEBUG-...]` instrumentation removed (`grep` the prefix)
 - [ ] Throwaway prototypes deleted (or moved to a clearly-marked debug location)
 - [ ] The hypothesis that turned out correct is stated in the commit / PR message, so the next debugger learns
+
+If this diagnosis included a code fix, run the global Jev `--gate` once after these checks and before declaring the fix ready. Give it the observed bug and expected behavior as `--spec-arquivo`, the output of the original repro plus relevant checks as `--verificar-saida`, and a diff covering every changed or new file (`--diff-arquivo` when `git diff HEAD` is incomplete). Follow the exit-code handling in `~/.agents/skills/decision-gate/SKILL.md`; a `passou` supplements, but never replaces, the original repro and regression evidence. Reuse a gate already run by /implement or /tdd for this same final change.
