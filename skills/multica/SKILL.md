@@ -128,10 +128,8 @@ seja qual for o nome dele (`Research`, `Builder`, `Operador`...). O nome é do t
 decide **harness e modelo**:
 
 1. **Escolha o papel** pelo trabalho que o agente vai fazer: medir, decidir, construir ou conferir.
-2. **O papel dá harness e modelo:** o melhor de cada papel está na skill `orchestri`; se a máquina do
-   runtime só tem um harness, o modelo daquele papel sai da tabela daquele harness (a `orchestri` no Claude
-   Code, a `agent-models` no Codex e no Cursor). Não escolha
-   modelo fora dessas tabelas.
+2. **O papel dá harness e modelo:** `node ~/.agents/papeis/harnesses.mjs resolver <papel>`; se a máquina do
+   runtime só tem um harness, o resolver cai para o que existe lá. Não escolha modelo fora dessa tabela.
 3. **A descrição do agente começa com o papel:** `papel: scout — <o que ele faz>`. É por ela que quem
    atribui um ticket sabe qual agente serve, sem abrir a instrução.
 4. **Agente que faz dois papéis são dois agentes.** Quem constrói não confere o próprio trabalho.
@@ -140,14 +138,14 @@ decide **harness e modelo**:
 ### Qual agente cada ticket leva
 
 Todo ticket nasce com o agente no `--assignee`, e o agente sai do **papel** do trabalho — os mesmos
-quatro da `orchestri`:
+quatro papéis:
 
-| O ticket é… | `--assignee` | Modelo |
-|---|---|---|
-| **medir** — localizar, inventariar, responder uma pergunta com evidência | `Scout` | GPT-6 Luna |
-| **decidir** — spec, plano, ordem de serviço de quebrar em tickets | `Reach` | Fable 5.1 |
-| **construir** — código e o teste dele, a partir de spec fechada | `Implement` | Grok 4.7 |
-| **conferir** — revisar o que um `Implement` entregou | `Monitoring` | GPT-6 Sol |
+| O ticket é… | `--assignee` |
+|---|---|
+| **medir** — localizar, inventariar, responder uma pergunta com evidência | `Scout` |
+| **decidir** — spec, plano, ordem de serviço de quebrar em tickets | `Reach` |
+| **construir** — código e o teste dele, a partir de spec fechada | `Implement` |
+| **conferir** — revisar o que um `Implement` entregou | `Monitoring` |
 
 - **Construção nunca nasce sozinha.** Todo trabalho que tem um `Implement` vira um pai com os subtickets
   abaixo, cada um no seu `--stage` — a onda seguinte só abre quando a anterior fechou. Cada subticket

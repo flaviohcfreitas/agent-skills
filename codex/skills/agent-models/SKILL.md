@@ -17,12 +17,9 @@ O que cada papel faz, como um alimenta o seguinte e de quem é cada skill estão
 
 Cada subagente recebe **um** papel. O papel decide o modelo; a tarefa decide o papel.
 
-| Papel | O que faz | Modelo | Esforço |
-| --- | --- | --- | --- |
-| **scout** | busca e junta, barato e em paralelo, a informação que o reach precisa: localizar, inventariar, coletar. Só leitura | `gpt-6-luna` | `medium` |
-| **implement** | executa a tarefa que o reach planejou, com arquivos exclusivos. Não decide o caminho | `gpt-6-luna` | `xhigh`; `max` no trabalho delimitado mais difícil |
-| **monitoring** | confere o que o implement entregou, pelo diff e pela verificação. Não conserta | `gpt-6-sol` | `max` |
-| **reach** | plano, arquitetura, ambiguidade central: a visão que o implement vai executar | modelo principal; `gpt-6-astra` como planejador separado | `high`; `max` nos casos mais difíceis |
+O modelo de cada papel é `node ~/.agents/papeis/harnesses.mjs resolver <papel> --aqui codex`. `nativo: true` → spawn nativo com o `modelo` e o `esforco` que ele devolve; senão, `rodar` chama a CLI do harness escolhido e devolve a prova da execução. Ausente ou falhou → o próximo candidato, dito em voz alta. `PAPEIS_SO=codex` mantém tudo no Codex. No monitoring, passe `--construtor <harness:modelo de quem construiu>`.
+
+Papéis em uma linha: **scout** busca e junta, só leitura; **implement** executa o plano do reach, com arquivos exclusivos; **monitoring** confere o diff e a verificação, sem consertar; **reach** decide.
 
 - **A tarefa completa é o ciclo scout → reach → implement → monitoring.** O monitoring que reprova devolve ao implement com o que faltou (até 2 voltas); lacuna de spec volta ao reach. Pular um papel só com o motivo escrito — o reach que já sabe os arquivos dispensa o scout; a tarefa que é só decisão termina no reach.
 - **Pague inteligência no reach e no monitoring, não no scout.** Vários scouts Luna e um monitoring Sol custam menos e acertam mais que vários Sol.
@@ -30,7 +27,7 @@ Cada subagente recebe **um** papel. O papel decide o modelo; a tarefa decide o p
 - **monitoring fica acima do implement, e nunca é o mesmo modelo que construiu.** Revisão crítica sobe para `gpt-6-astra`.
 - **implement com plano incompleto devolve a lacuna** ao principal em vez de decidir sozinho: decidir é do reach.
 - Regra do projeto (piso de modelo, fluxo crítico) vence esta tabela.
-- Tudo aqui fica **dentro do Codex**. Mandar trabalho para Claude Code ou Cursor é a skill `orchestri`, e só quando o usuário a chama.
+- O papel cruza para outro harness pela tabela, dito em voz alta; quem quer ficar só no Codex usa `PAPEIS_SO=codex`.
 
 Se indisponíveis, use equivalentes oferecidos pela sessão, mantendo a ordem scout ≤ implement < monitoring ≤ reach. Informe a substituição. Não altere a configuração global nem o modelo principal. Para busca factual simples e latência prioritária, reduza o esforço quando adequado.
 

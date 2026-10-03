@@ -11,14 +11,11 @@ Mantenha a decisão e a integração com o agente principal. Delegue quando houv
 
 O que cada papel faz, como um alimenta o seguinte e de quem é cada skill estão no `agent.md` (global, e na raiz do projeto). Esta skill diz **com qual modelo** cada papel roda neste harness.
 
-| Papel | O que faz | Modelo |
-| --- | --- | --- |
-| **scout** | busca e junta, barato e em paralelo, a informação que o reach precisa: localizar, inventariar, coletar. Só leitura | Composer 2.5 |
-| **implement** | executa a tarefa que o reach planejou, com arquivos exclusivos. Não decide o caminho | Composer 2.5 |
-| **monitoring** | confere o que o implement entregou, pelo diff e pela verificação. Não conserta | Grok 4.7 |
-| **reach** | plano, arquitetura, ambiguidade central: a visão que o implement vai executar | Grok 4.7 |
+O modelo de cada papel é `node ~/.agents/papeis/harnesses.mjs resolver <papel> --aqui cursor`. `nativo: true` → spawn nativo com o `modelo` que ele devolve; senão, `rodar` chama a CLI do harness escolhido e devolve a prova da execução. Ausente ou falhou → o próximo candidato, dito em voz alta. `PAPEIS_SO=cursor` mantém tudo no Cursor. No monitoring, passe `--construtor <harness:modelo de quem construiu>`.
 
-**No Cursor usamos só Composer e Grok.** Composer é o barato e nativo; Grok é o mais capaz dos dois. Modelo de outro provedor se alcança pelo harness dele, via `orchestri`.
+Papéis em uma linha: **scout** busca e junta, só leitura; **implement** executa o plano do reach, com arquivos exclusivos; **monitoring** confere o diff e a verificação, sem consertar; **reach** decide.
+
+**No Cursor usamos só Composer e Grok.** Composer é o barato e nativo; Grok é o mais capaz dos dois. Modelo de outro provedor se alcança pelo harness dele, pela tabela.
 
 ⚠️ **Os IDs não foram conferidos em `cursor-agent models`** (25/09/2026, sem login). Rode o comando e use o ID que ele listar.
 
@@ -26,10 +23,10 @@ O que cada papel faz, como um alimenta o seguinte e de quem é cada skill estão
 - **Pague inteligência no reach e no monitoring, não no scout.** Vários scouts Composer e um monitoring Grok custam menos e acertam mais que vários Grok.
 - **Todo papel delega.** Reach, implement ou monitoring — inclusive rodando como agente do Multica — mandam a varredura (localizar, ler log, inventariar) para um **scout**, no modelo barato, e ficam com o raciocínio. Um diagnóstico no modelo caro não lê o repositório inteiro sozinho.
 - **monitoring fica acima do implement, e nunca é o mesmo modelo que construiu.** Grok é o monitoring aqui porque lidera a pista agêntica medida: 71,0% DeepSWE v1.1, 37,6% Terminal-Bench 4.0.
-- **Grok é reach e monitoring ao mesmo tempo.** Quando ele planejou a fatia, a revisão dele herda o próprio plano: para trabalho crítico, peça o monitoring de outro harness pela `orchestri`.
+- **Grok é reach e monitoring ao mesmo tempo.** Quando ele planejou a fatia, a revisão dele herda o próprio plano: o `--construtor` já garante o monitoring de outro provedor.
 - **implement com plano incompleto devolve a lacuna** ao principal em vez de decidir sozinho: decidir é do reach.
 - Regra do projeto (piso de modelo, fluxo crítico) vence esta tabela.
-- Tudo aqui fica **dentro do Cursor**. Mandar trabalho para Claude Code ou Codex é a skill `orchestri`, e só quando o usuário a chama.
+- O papel cruza para outro harness pela tabela, dito em voz alta; quem quer ficar só no Cursor usa `PAPEIS_SO=cursor`.
 
 ## Como chamar
 

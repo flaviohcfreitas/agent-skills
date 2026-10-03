@@ -69,6 +69,17 @@ for agent_file in "$REPO"/claude/agents/*.md; do
   ln -s "$agent_file" "$target"
   echo "$target -> $agent_file"
 done
+# Os workflows dos padrões de grafo (só Claude Code), um link por arquivo: o glob *.js deixa o simulador e o teste de fora,
+# e ~/.claude/workflows/ continua podendo ter workflows do usuário.
+for wf_file in "$REPO"/claude/workflows/*.js; do
+  [ -f "$wf_file" ] || continue
+  target="$TARGET_HOME/.claude/workflows/$(basename "$wf_file")"
+  if [ -L "$target" ] && [ "$(readlink "$target")" = "$wf_file" ]; then continue; fi
+  if [ -e "$target" ] || [ -L "$target" ]; then echo "Conflito: $target já existe; preservado." >&2; continue; fi
+  mkdir -p "$(dirname "$target")"
+  ln -s "$wf_file" "$target"
+  echo "$target -> $wf_file"
+done
 # O agent.md — o conceito dos papéis — é a instrução global do Claude Code e do Codex.
 # Arquivo vazio no lugar dá vez ao link; arquivo com conteúdo é preservado.
 for target in "$TARGET_HOME/.claude/CLAUDE.md" "$TARGET_HOME/.codex/AGENTS.md"; do
@@ -79,4 +90,6 @@ for target in "$TARGET_HOME/.claude/CLAUDE.md" "$TARGET_HOME/.codex/AGENTS.md"; 
   ln -s "$REPO/agent.md" "$target"
   echo "$target -> $REPO/agent.md"
 done
+# A tabela de harness e modelo por papel: os agentes dos três harnesses a leem em ~/.agents/papeis.
+link_skill "$REPO/papeis" "$TARGET_HOME/.agents/papeis"
 echo "Skills instaladas; arquivos e links existentes preservados."

@@ -56,13 +56,17 @@ Depois de criar a pasta com `SKILL.md`, execute `./install.sh`. Use nomes difere
 
 **Limite da separação:** o Cursor também descobre `~/.claude/skills` e `~/.codex/skills` por compatibilidade. Portanto, caminhos separados não são isolamento estrito de descoberta no Cursor. As versões de orquestração usam nomes diferentes para evitar colisões e dizem explicitamente em qual harness operar. Desativar todas as importações de terceiros no Cursor também afetaria outras skills e configurações, então o instalador não altera essa preferência. Consulte a [documentação de skills do Cursor](https://prod.cursor.com/docs/skills).
 
-Codex e Cursor têm a skill **`agent-models`**: os modelos deles nos quatro papéis — **scout**, **reach**, **implement** e **monitoring** — sem sair do harness. No Claude Code, a skill **`orchestri`** (`claude/skills/orchestri/`, só por invocação manual) é a tabela e o grafo: roda os quatro papéis num workflow dinâmico, cada papel no harness do modelo dele, e `--claude`, `--codex`, `--cursor` ou `--grok` restringem aos harnesses nomeados. Chamá-la é a autorização para cruzar. `orbti-loop` e a `agent-models` do Claude saíram em 27/09/2026, absorvidas por ela. O roteiro de decisão, briefing e integração vem do [vídeo de Rafael Quintanilha](https://www.youtube.com/watch?v=n4e5wV3unA4).
+A tabela de harness e modelo por papel — **scout**, **reach**, **implement** e **monitoring** — mora num arquivo só, [`papeis/harnesses.mjs`](papeis/harnesses.mjs), e os quatro agentes (`claude/agents/`) a leem antes de trabalhar, em qualquer harness. O padrão roda no harness do agente → ele faz o trabalho; o padrão é outro harness → o agente é a ponte e chama a CLI dele, com prova da execução; ausente ou falhou → o próximo candidato, dito em voz alta. `PAPEIS_SO=claude,codex` restringe os harnesses. Codex e Cursor têm a skill **`agent-models`**, que só diz como delegar em cada harness (briefing, Jev, integração, que vem do [vídeo de Rafael Quintanilha](https://www.youtube.com/watch?v=n4e5wV3unA4)); a `orchestri` e o `orbti-loop` saíram.
 
-| Harness | Skill | scout · implement · monitoring · reach |
-|---|---|---|
-| Codex | `codex/skills/agent-models/` | GPT-6 Luna · GPT-6 Luna · GPT-6 Sol · GPT-6 Astra |
-| Claude Code | `claude/skills/orchestri/` (`--claude`) | Haiku 4.5 · Sonnet 5 · Opus 5.5 · Opus 5.5 (Fable 5.1 na escalada) |
-| Cursor | `cursor/skills/agent-models/` | Composer 2.5 · Composer 2.5 · Grok 4.7 · Grok 4.7 |
+```bash
+node ~/.agents/papeis/harnesses.mjs resolver scout --aqui claude:claude-haiku-4-5
+```
+
+O harness e o modelo padrão de cada papel estão em [`papeis/harnesses.mjs`](papeis/harnesses.mjs) (fonte única); `resolver <papel>` mostra quem roda aqui.
+
+**Instalar:** `./install.sh` liga `~/.agents/papeis` → `papeis/`. Para os subagentes poderem rodar as CLIs externas sem pedir permissão a cada chamada, acrescente em `~/.claude/settings.json`, em `permissions.allow`, a linha `Bash(node ~/.agents/papeis/harnesses.mjs rodar:*)`. Quem tinha a `orchestri` instalada remove o link quebrado: `rm ~/.claude/skills/orchestri ~/.agents/skills/orchestri`.
+
+**Workflows:** `./install.sh` também liga, arquivo a arquivo, `claude/workflows/*.js` (`laco-de-refaz`, `ondas`, `adversarial`) em `~/.claude/workflows/`; só o Claude Code os executa. Teste: `node --test claude/workflows/`.
 
 `~/.codex/skills` é o diretório específico já usado por esta instalação do Codex. Abra uma nova tarefa ou reinicie o aplicativo se a skill não aparecer. Não é necessário alterar `config.toml`. O instalador também aceita `AGENT_SKILLS_HOME=/caminho` para conferir os links em um destino isolado.
 
