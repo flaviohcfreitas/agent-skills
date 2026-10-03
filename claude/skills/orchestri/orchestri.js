@@ -59,25 +59,6 @@ const DESCOBERTA = {
   required: ['resumo'],
 }
 
-const MAPA = {
-  type: 'object',
-  properties: {
-    sem_nevoa: { type: 'boolean' },
-    destino: { type: 'string' },
-    resumo: { type: 'string' },
-    decisoes: LISTA,
-    research: { type: 'array', items: { type: 'object', properties: { ticket: { type: 'string' }, pergunta: { type: 'string' } }, required: ['ticket', 'pergunta'] } },
-    perguntas: PERGUNTAS,
-    prototipos: { type: 'array', items: { type: 'object', properties: { ticket: { type: 'string' }, pergunta: { type: 'string' }, tipo: { type: 'string', enum: ['logica', 'ui'] }, onde: { type: 'string' } }, required: ['ticket', 'pergunta', 'tipo'] } },
-    humano: { type: 'array', items: { type: 'object', properties: { ticket: { type: 'string' }, tipo: { type: 'string', enum: ['task'] }, o_que: { type: 'string' } }, required: ['ticket', 'tipo', 'o_que'] } },
-    fatias: { type: 'array', items: { type: 'object', properties: { nome: { type: 'string' }, o_que: { type: 'string' }, depende_de: LISTA }, required: ['nome', 'o_que'] } },
-    nevoa: LISTA,
-    fora_do_escopo: LISTA,
-    suposicoes: LISTA,
-  },
-  required: ['sem_nevoa', 'resumo'],
-}
-
 const SPEC = {
   type: 'object',
   properties: {
@@ -273,9 +254,9 @@ const respostas = [...(args?.respostas ?? [])]   // cresce com cada questionári
 const respostasDescoberta = () => respostas.filter((r) => r?.rota !== 'to-spec' && r?.rota !== 'aprovacao')
 // O mapa aparece na janela principal a cada rodada; a lista vai no resultado do grafo.
 const mapas = []
-const paineisDo = (m) => [...(m.perguntas?.length ? [{ painel: 'Grilling · to-map', para: `${m.perguntas.length} pergunta(s) para você` }] : []), ...(m.prototipos ?? []).map((p) => ({ painel: `Protótipo · ${p.ticket}`, para: p.pergunta }))]
 const MAX_VOLTAS_TICKET = 2   // refaz por ticket
 const MAX_RODADAS = 3         // reach → implement → monitoring, até a tarefa fechar
+const MAX_TICKETS_MAPA = 12   // sessões do to-map (um ticket cada) antes de devolver ao usuário
 // Regra que protege dinheiro fica em código: o tema marca o crítico, diga o reach o que disser.
 const TEMA_CRITICO = /cr[eé]dito|parcela|pagamento|d[eé]bito|cobran[çc]a|juros|cadastro|autentica|login|senha|\bcpf\b|\bcnpj\b|open finance|proposta/i
 const temaCritico = TEMA_CRITICO.test(tarefa.replace(/menos[-_ ]?juros/gi, ''))   // o nome do projeto não é tema
@@ -347,17 +328,17 @@ const RESPOSTAS = {
   required: ['respostas'],
 }
 let nPainel = 0
-async function painel(nome, briefing, contrato, schema, phase) {
+async function painel(nome, briefing, contrato, schema, phase, modelo = 'claude-opus-5-5') {
   const n = nPainel++
   const base = `$TMPDIR/orchestri-${nome}-${n}`
   // O nome do painel diz a função dele: Grilling · <rota> ou Protótipo · <ticket>.
-  const rotulo = nome.replace(/^grill-/, 'Grilling · ').replace(/^proto-/, 'Protótipo · ').slice(0, 48)
+  const rotulo = nome.replace(/^grill-/, 'Grilling · ').replace(/^proto-/, 'Protótipo · ').replace(/^to-map-/, 'Mapa · ').slice(0, 48)
   const r = await ag(
     `Você é a PONTE para um painel do Herdr. Não faça o trabalho do painel: só abra, entregue o briefing e espere o resultado. Leia ~/.agents/skills/herdr/SKILL.md antes.\n` +
     `1. test "$HERDR_ENV" = 1 — falhou: ok=false, motivo "fora do Herdr", e PARE.\n` +
     `2. Grave o briefing abaixo, inteiro, em "${base}.md". O resultado vai em "${base}.json" (apague esse arquivo se já existir).\n` +
     `3. herdr pane layout --current; abra um painel ao lado: herdr pane split --current --direction <right se o painel é largo, senão down> --cwd "${REPO ?? '$PWD'}" --no-focus. Guarde .result.pane.pane_id. Dê o nome ao painel: herdr pane rename <pane_id> "${rotulo}".\n` +
-    `4. herdr agent start ${nome.replace(/[^a-z0-9-]/gi, '-').toLowerCase().slice(0, 24)}-${n} --kind claude --pane <pane_id> -- --model claude-opus-5-5 (agent_not_ready: espere com herdr agent wait até idle).\n` +
+    `4. herdr agent start ${nome.replace(/[^a-z0-9-]/gi, '-').toLowerCase().slice(0, 24)}-${n} --kind claude --pane <pane_id> -- --model ${modelo} (agent_not_ready: espere com herdr agent wait até idle).\n` +
     `5. herdr agent prompt <agente> "Leia e siga ${base}.md. O usuário conversa com você neste painel." — sem --wait.\n` +
     `6. herdr notification, se existir, avisando o usuário que o painel "${nome}" espera por ele.\n` +
     `7. Espere o arquivo "${base}.json" em laços de até 8 min (until [ -f "${base}.json" ]; do sleep 15; done, com timeout; o Bash tem teto de 10 min). No máximo 45 min no total: passou, ok=false, motivo "sem resposta em 45 min".\n` +
@@ -386,37 +367,14 @@ async function questionario(perguntas, rota) {
   return dadas
 }
 
-// O protótipo: a skill prototype original, construída por um Claude num painel e publicada como
-// artifact do Claude. O usuário julga na conversa do painel; o veredito volta como resposta.
-async function prototipo(p, rota) {
-  const r = await painel(`proto-${p.ticket}`,
-    `Ticket prototype ${p.ticket}: ${p.pergunta}\nTipo: ${p.tipo}. Onde: ${p.onde ?? '(decida pelo código)'}.\n\n` +
-    'Rode a skill prototype (~/.agents/skills/prototype/SKILL.md), no ramo que ela manda para este tipo, e entregue o protótipo como ARTIFACT do Claude: ' +
-    'um HTML autocontido publicado com a ferramenta Artifact (carregue a skill artifact-design antes). Mostre o link ao usuário e converse com ele neste painel até ele julgar; ajuste e publique de novo no mesmo artifact quando ele pedir.\n' +
-    'O artifact é publicado: NUNCA ponha dado real de cliente (nome, CPF, CNPJ, telefone, conta, valor de uma pessoa). Com dado de produção, use a FORMA (campos, distribuições, contagens) e troque os valores por fictícios.\n' +
-    'Não escreva código de produção e não commite.',
-    '{"artifact":"<url>","mostra":"<uma linha>","decisao":"<o que o usuário decidiu, numa frase>","comentarios":["<o que ele pediu ou apontou>"]}',
-    { type: 'object', properties: { artifact: { type: 'string' }, mostra: { type: 'string' }, decisao: { type: 'string' }, comentarios: { type: 'array', items: { type: 'string' } } }, required: ['decisao'] },
-    'Protótipo')
-  linhas.push({ frente: `prototype:${p.ticket}`, papel: 'reach', harness: 'claude', modelo: 'claude-opus-5-5' })
-  if (!r?.decisao) return null
-  return { pergunta: `${p.ticket} — ${p.pergunta}`, resposta: `${r.decisao}${r.artifact ? ` · artifact: ${r.artifact}` : ''}${r.comentarios?.length ? ` · comentários: ${r.comentarios.join(' | ')}` : ''}`, rota }
-}
-
-// Perguntas, protótipos e scouts saem JUNTOS: cada painel espera o usuário enquanto os scouts buscam.
-async function perguntarEBuscar(perguntas, buscas, rota, prototipos = []) {
-  const [dadas, protos, novos] = await parallel([
+// Perguntas e scouts saem JUNTOS: o painel do grilling espera o usuário enquanto os scouts buscam.
+async function perguntarEBuscar(perguntas, buscas, rota) {
+  const [dadas, novos] = await parallel([
     () => (perguntas?.length ? questionario(perguntas, rota) : Promise.resolve([])),
-    () => parallel(prototipos.map((p) => () => prototipo(p, rota))),
     () => (buscas?.length ? parallel(buscas.map((b) => () => scout(b.pergunta, b.label))) : Promise.resolve([])),
   ])
   achados.push(...(novos ?? []).filter(Boolean))
-  const julgados = (protos ?? []).filter(Boolean)
-  respostas.push(...julgados)
-  // O que a pausa mostra: as perguntas sem resposta e os protótipos que ninguém julgou.
-  const semProto = prototipos.filter((p, i) => !(protos ?? [])[i]).map((p) => ({ title: `${p.ticket} — ${p.pergunta}`, body: `Protótipo (${p.tipo}) que não foi julgado no painel.`, options: [] }))
-  const pendentes = [...(perguntas?.length && !dadas ? perguntas : []), ...semProto]
-  return pendentes.length ? { pausa: pendentes } : { ok: true }
+  return perguntas?.length && !dadas ? { pausa: perguntas } : { ok: true }
 }
 
 // Não aja antes de o usuário confirmar o entendimento (regra da skill grilling).
@@ -531,42 +489,42 @@ let entendimento = null
 let rota = grande ? 'to-map' : 'grilling'
 for (let volta = 0; volta < 2 && !entendimento; volta++) {
   if (grande) {
-    // to-map: o mapa fica no grafo, sem publicar. Os tickets research viram scouts dirigidos.
-    for (let rodadaMapa = 0; rodadaMapa <= 4 && !entendimento; rodadaMapa++) {
-      phase('Mapa')
-      const m = await rodar('reach',
-        `Tarefa:\n${tarefa}\n\n` +
-        (achados.length ? `O que os scouts responderam aos tickets research:\n${texto(achados)}\n\n` : '') +
-        `Respostas do usuário até aqui:\n${respostasDescoberta().length ? texto(respostasDescoberta()) : '(nenhuma)'}\n\n` +
-        'Siga o método da skill to-map lendo ~/.agents/skills/to-map/SKILL.md (ela não se invoca pela ferramenta Skill) SEM card e SEM publicar no tracker: devolva o mapa aqui. ' +
-        'Se a varredura em largura não achar névoa (o caminho já está claro e cabe numa sessão), marque sem_nevoa=true e pare. ' +
-        'Senão: destino, decisões já tomadas, fatias em ordem de dependência, névoa, fora do escopo. ' +
-        'Tickets research (fato que uma decisão espera) vão em research, cada um com a pergunta exata para um scout. ' +
-        'Tickets grilling viram perguntas (title, body, options, recomendação). Tickets prototype vão em prototipos, com a pergunta que o protótipo responde, e o tipo (logica ou ui). Tickets task vão em humano. ' +
-        'Resolva com os achados e as respostas o que já dá para decidir. Decisão ainda aberta vira pergunta, com a sua recomendação — nunca fica no resumo.',
-        { label: `reach:to-map.${volta}.${rodadaMapa}${tagReach}`, phase: 'Mapa', schema: MAPA, modelo: modeloReach })
-      if (!m) return fim('humano', { motivo: 'o reach não respondeu no to-map' })
-      decididoSozinho.push(...(m.suposicoes ?? []))
-      if (m.sem_nevoa) {
-        grande = false; ajustarReach(); rota = 'grilling'
-        log('to-map: sem névoa — segue pelo grilling')
-        break
-      }
-      if (m.humano?.length) return fim('humano', { motivo: `o mapa tem ticket que é do usuário: ${m.humano.map((h) => `${h.ticket} (${h.tipo}): ${h.o_que}`).join('; ')}`, mapa: m })
-      const onde = `to-map ${volta}.${rodadaMapa}`
-      log(`mapa ${onde}: ${(m.fatias ?? []).map((f) => f.nome).join(' → ')}; painéis: ${paineisDo(m).map((x) => x.painel).join(', ') || 'nenhum'}; scouts: ${m.research?.length ?? 0}`)
-      // Todo mapa aparece na janela principal (o log e o journal): a sessão mostra, sem parar o grafo.
-      mapas.push({ onde, destino: m.destino, fatias: (m.fatias ?? []).map((f) => f.nome), abre: paineisDo(m), scouts: (m.research ?? []).map((x) => x.ticket), nevoa: m.nevoa ?? [], fora: m.fora_do_escopo ?? [] })
-      if (m.research?.length || m.perguntas?.length || m.prototipos?.length) {
-        log(`to-map: ${m.research?.length ?? 0} scout(s) dirigido(s), ${m.perguntas?.length ?? 0} pergunta(s), ${m.prototipos?.length ?? 0} protótipo(s) — em paralelo`)
-        const r = await perguntarEBuscar(m.perguntas, (m.research ?? []).map((x) => ({ pergunta: x.pergunta, label: `scout:${x.ticket}` })), 'to-map', m.prototipos ?? [])
-        if (r.pausa) return fim('perguntas', { perguntas: r.pausa, rota: 'to-map', mapa: m })
-        continue
-      }
-      // mapa sem pendências: segue para a spec (o usuário acompanha o mapa na janela principal)
-      entendimento = m
+    // to-map ORIGINAL (a wayfinder), como ela é, num painel do Herdr com o usuário. O mapa vive no tracker e
+    // cresce em CAMADAS: cada ticket resolvido fecha e entra em Decisions so far, a névoa que ficou nítida vira
+    // ticket, o que passou do destino sai do escopo. O destino não muda (mudou = esforço novo) e o mapa nunca é
+    // refeito. Um ticket por sessão, como a skill manda; o grafo só abre a sessão seguinte e acompanha.
+    phase('Mapa')
+    const TO_MAP = '~/.agents/skills/to-map/SKILL.md'
+    const TRACKER = 'o tracker deste repositório (a doc de issue tracker do repo diz qual e como; aqui é o Multica)'
+    const modeloMapa = escalada ?? 'claude-fable-5-1'
+    let mapa = args?.mapa ?? null
+    if (!mapa) {
+      const c = await painel('to-map-traçar',
+        `Rode a skill to-map (${TO_MAP}) COMO ELA É, no modo "Chart the map", com o usuário NESTE painel. Ela não se invoca pela ferramenta Skill: leia o SKILL.md e siga.\n` +
+        `A ideia que chegou:\n${tarefa}\n\nO mapa e os tickets vão para ${TRACKER}. Pare ao fim do charting, como a skill manda.`,
+        '{"mapa":"<url ou id do mapa no tracker>","destino":"<o destino>","sem_nevoa":false}',
+        { type: 'object', properties: { mapa: { type: 'string' }, destino: { type: 'string' }, sem_nevoa: { type: 'boolean' } } },
+        'Mapa', modeloMapa)
+      linhas.push({ frente: 'to-map:traçar', papel: 'reach', harness: 'claude', modelo: modeloMapa })
+      if (!c) return fim('humano', { motivo: 'o painel do to-map não voltou: rode /to-map e retome com args.mapa' })
+      if (c.sem_nevoa) { grande = false; ajustarReach(); rota = 'grilling'; log('to-map: sem névoa — segue pelo grilling') }
+      else if (!c.mapa) return fim('humano', { motivo: 'o to-map não devolveu o mapa' })
+      else { mapa = c.mapa; mapas.push({ onde: 'traçado', mapa, destino: c.destino }); log(`mapa traçado: ${mapa} — destino: ${c.destino ?? '?'}`) }
     }
-    if (grande && !entendimento) return fim('humano', { motivo: 'o to-map rodou cinco vezes sem fechar o mapa' })
+    for (let t = 0; grande && t < MAX_TICKETS_MAPA && !entendimento; t++) {
+      const w = await painel(`to-map-ticket ${t + 1}`,
+        `Rode a skill to-map (${TO_MAP}) COMO ELA É, no modo "Work through the map", sobre o mapa ${mapa} em ${TRACKER}, com o usuário NESTE painel. ` +
+        'UM ticket nesta sessão (a skill deixa pesquisa em paralelo). Registre a resolução como a skill manda: comentário, fechar, Decisions so far, tickets novos, névoa graduada, fora do escopo. Não refaça o mapa.',
+        '{"ticket":"<nome do ticket>","resposta":"<o gist da resolução>","abertos":<tickets abertos no mapa>,"destino_claro":<true quando nada resta decidir>,"destino":"<o destino>","resumo":"<Decisions so far, em linhas>"}',
+        { type: 'object', properties: { ticket: { type: 'string' }, resposta: { type: 'string' }, abertos: { type: 'integer' }, destino_claro: { type: 'boolean' }, destino: { type: 'string' }, resumo: { type: 'string' } }, required: ['abertos', 'destino_claro'] },
+        'Mapa', modeloMapa)
+      linhas.push({ frente: `to-map:ticket ${t + 1}`, papel: 'reach', harness: 'claude', modelo: modeloMapa })
+      if (!w) return fim('humano', { motivo: `o painel do to-map não voltou no ticket ${t + 1}: siga com /to-map ${mapa} e retome com args.mapa`, mapa })
+      mapas.push({ onde: `ticket ${t + 1}`, mapa, ticket: w.ticket, resposta: w.resposta, abertos: w.abertos })
+      log(`mapa ${mapa}: ticket ${t + 1} "${w.ticket ?? '?'}" — ${w.resposta ?? ''} · ${w.abertos} aberto(s)`)
+      if (w.destino_claro || w.abertos === 0) entendimento = { mapa, destino: w.destino, resumo: w.resumo ?? '' }
+    }
+    if (grande && !entendimento) return fim('humano', { motivo: `o mapa ${mapa} não fechou em ${MAX_TICKETS_MAPA} tickets: siga com /to-map e retome com args.mapa`, mapa })
     if (entendimento) break
   }
 
@@ -690,7 +648,7 @@ for (let rodada = 0; rodada < MAX_RODADAS; rodada++) {
   phase('Tickets')
   const tk = await rodar('reach',
     `Spec fechada:\n${texto(decisao.spec)}\n\n` +
-    (rota === 'to-map' ? `O mapa (to-map):\n${texto(entendimento)}\n\n` : '') +
+    (rota === 'to-map' ? `O mapa (to-map) está no tracker: ${entendimento.mapa}. Leia o mapa e os tickets fechados (as decisões moram neles):\n${texto(entendimento)}\n\n` : '') +
     'Não decida o harness nem o modelo de quem constrói ou confere — isso é do plano, em código; falha de runner não é lacuna de spec. Siga o método da skill to-tickets lendo ~/.agents/skills/to-tickets/SKILL.md (ela não se invoca pela ferramenta Skill): quebre a spec em tickets verticais, cada um com arquivos EXCLUSIVOS (dois tickets nunca escrevem o mesmo arquivo), ' +
     'critério de pronto verificável e depende_de. Não publique no tracker: devolva os tickets.',
     { label: `reach:to-tickets.${rodada}${tagReach}`, phase: 'Tickets', schema: TICKETS, modelo: modeloReach })
