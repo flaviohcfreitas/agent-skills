@@ -13,7 +13,7 @@ effort: high
 O harness e o modelo do papel estão em `~/.agents/papeis/harnesses.mjs`, não neste arquivo.
 
 1. **`PAPEL_DESTINO` no briefing ou no ambiente?** Você é o destino: pule para o trabalho.
-2. Rode `node ~/.agents/papeis/harnesses.mjs resolver monitoring --aqui claude:<o ID exato do seu modelo>`. Acrescente `--construtor <harness:modelo de quem construiu>`, que vem no handoff do implement.
+2. Rode `node ~/.agents/papeis/harnesses.mjs resolver monitoring --aqui claude:<o ID exato do seu modelo>`. Acrescente `--construtor <harness:modelo de quem construiu>`, que vem no handoff do implement. Se o briefing traz uma linha `PAPEIS:`, rode o resolver com aquele ambiente e aquelas opções (`PAPEIS: PAPEIS_SO=claude --escalada` vira `PAPEIS_SO=claude node … resolver … --escalada`).
 3. `nativo: true` → faça o trabalho.
 4. `nativo: false` → você é a **ponte**. Rode `rodar` (mesmas opções, mais `--briefing -`) com o briefing que
    recebeu, inteiro, por stdin (heredoc), **em background** (o Bash tem teto de 10 min), e espere o fim.

@@ -62,6 +62,7 @@ primeira linha da resposta ("vou chamar o scout para achar X"), para o usuário 
 | ter uma visão: decidir, especificar, quebrar, prototipar, diagnosticar | o **reach** (→ scout, se faltar um fato) |
 | construir o que já está decidido | o **laço de refaz** |
 | conferir o que existe ou o que foi construído | o **monitoring** |
+| a tarefa cumpre os **4 critérios do agent-loop** (repete, cabe no orçamento, conferível sem humano, roda local) | **sugerir** o agent-loop e **perguntar**; nunca disparar |
 | **complexa** — o caminho ainda não está decidido **e** a tarefa pede construção | o **ciclo inteiro**: **leque** → reach → **ondas** |
 
 - **Complexa tem critério, não gosto:** caminho em aberto **e** construção. "Corrige o cálculo da taxa,
@@ -81,18 +82,19 @@ e a sessão os segue.
 |---|---|---|
 | **leque** | N scouts em paralelo, cada um num ângulo → 1 reach consolida | texto |
 | **até secar** | rodadas de scouts até 2 rodadas seguidas sem achado novo → reach | texto |
-| **névoa** | reach traça o mapa ⇄ scouts dirigidos pela pergunta exata, até a névoa fechar | texto |
+| **névoa** | reach traça o mapa e os tickets de decisão (os de pesquisa já disparam scouts) e **para**; o usuário percorre o mapa um ticket por sessão, até a névoa fechar. Não roda sozinho | texto |
 | **diagnóstico** | scout → monitoring diz o que está desalinhado com o que deveria → *(desalinhado)* reach monta a causa | texto |
 | **painel** | N reach com ângulos diferentes → monitoring escolhe → reach junta o melhor | texto |
 | **laço de refaz** | implement ⇄ monitoring, com o Jev no veredito; até 2 voltas, na 3ª humano | workflow `laco-de-refaz` |
 | **ondas** | tickets → um implement por ticket, em ondas pela dependência, cada um no seu **laço de refaz** → fechamento obrigatório | workflow `ondas` |
 | **adversarial** | N monitoring tentam refutar o mesmo achado, cada um com uma lente → a maioria decide | workflow `adversarial` |
+| **agent-loop** | reach escreve os checks → humano aprova → travados → rodadas de implement (contexto novo) → monitoring dá a nota (checks + Jev): mantém ou desfaz → fechamento | workflow `agent-loop-rodadas` |
 
 - **O ciclo inteiro é uma composição:** **leque** → reach (spec e tickets) → **ondas**. Não há workflow
   dele: a sessão compõe.
 - **Fluxo crítico** (dinheiro, crédito, cadastro, auth) para os três workflows antes de rodar o primeiro
   agente, até o usuário autorizar; autorizado, o fim nunca é `passou` sozinho.
-- **Nenhum padrão faz commit nem abre PR.** Quem abre é a sessão.
+- **Nenhum padrão faz commit nem abre PR.** Quem abre é a sessão. **Exceção: o `agent-loop`** faz um commit por rodada mantida, só no branch `agent-loop/<slug>` do worktree dele (o commit mantém, o reset desfaz); levar ao branch de trabalho, o PR e o merge continuam da sessão, com o humano.
 
 ## O caminho de cada skill
 
@@ -103,7 +105,7 @@ A skill não pertence a um agente: **ela desenha o caminho dela no grafo**, e o 
 |---|---|
 | `research` | **leque**, sem o reach no fim quando só se pede o achado; **até secar** quando o tamanho é desconhecido |
 | `grilling` · `to-questionnaire` | **reach** monta as perguntas, com recomendação → *(falta um fato)* **scout** → **reach**. As perguntas voltam à sessão, que pergunta ao usuário |
-| `to-map` | **névoa** |
+| `to-map` | **névoa**: gera o mapa e para; cada ticket depois é uma sessão que o usuário dispara |
 | `to-spec` · `to-tickets` | **reach** → *(falta um fato)* **scout** → **reach** |
 | `prototype` | **reach** fecha a pergunta e constrói o protótipo descartável (não passa pelo monitoring) |
 | `diagnosing-bugs` | **diagnóstico** (o scout junta log, erro, gravação e código) → *(o usuário pede a correção)* **laço de refaz** |

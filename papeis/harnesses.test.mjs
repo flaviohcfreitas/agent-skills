@@ -283,3 +283,38 @@ test('monitoring: o par declarado (Fable) excluído cai para o Opus e fica em ca
   assert.equal(hm(m), 'claude:claude-opus-5-5')
   assert.ok(m.caiu.some((c) => c.startsWith('claude:claude-fable-5-1') && c.includes('falhou nesta rodada')), JSON.stringify(m.caiu))
 })
+
+// ---------- escalada do monitoring (agent-loop, specs/loop-karpathy.md seção 4.6) ----------
+
+test('escalada: PAPEIS_SO=claude + --escalada dá o Fable ao monitoring, pela ponte (nativo:false) com --model fable', () => {
+  const r = res('monitoring', { so: ['claude'], aqui: 'claude:claude-opus-5-5', construtor: 'claude:claude-sonnet-5-5', escalada: true })
+  assert.equal(hm(r), 'claude:claude-fable-5-1')
+  assert.equal(r.nativo, false)
+  assert.ok(r.comando.join(' ').includes('claude -p --agent monitoring --model fable'))
+  assert.ok(r.comando.includes('dontAsk') && r.comando.includes('Read Grep Glob Bash'))
+})
+
+test('escalada: sem --escalada o monitoring só-Claude continua no Opus, como antes', () => {
+  const r = res('monitoring', { so: ['claude'], aqui: 'claude:claude-opus-5-5', construtor: 'claude:claude-sonnet-5-5' })
+  assert.equal(hm(r), 'claude:claude-opus-5-5')
+  assert.equal(r.nativo, true)
+})
+
+test('escalada: com o Codex permitido, --escalada não tira o Sol da frente do monitoring', () => {
+  const r = res('monitoring', { aqui: 'claude:claude-opus-5-5', construtor: 'claude:claude-sonnet-5-5', escalada: true })
+  assert.equal(hm(r), 'codex:gpt-6-sol')
+})
+
+test('escalada: o implement só-Claude continua no Sonnet nativo, com ou sem --escalada', () => {
+  for (const escalada of [false, true]) {
+    const r = res('implement', { so: ['claude'], aqui: 'claude:claude-sonnet-5-5', escalada })
+    assert.equal(hm(r), 'claude:claude-sonnet-5-5')
+    assert.equal(r.nativo, true)
+  }
+})
+
+test('escalada: a tabela não muda — o candidato Claude do monitoring só ganha o campo escalada', () => {
+  const c = PREFERENCIA.monitoring.find((x) => x.harness === 'claude')
+  assert.equal(c.modelo, 'claude-opus-5-5')
+  assert.equal(c.escalada, 'claude-fable-5-1')
+})

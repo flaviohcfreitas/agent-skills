@@ -24,7 +24,7 @@ export function textoDoMeta(corpo) {
 }
 export const avaliarMeta = (corpo) => new Function('return ' + textoDoMeta(corpo))()
 
-export async function simular(nome, { args, agente, filhos = {}, _compartilhado, _nivel = 0 } = {}) {
+export async function simular(nome, { args, agente, filhos = {}, budget: orcamento, _compartilhado, _nivel = 0 } = {}) {
   const corpo = ler(nome).replace('export const meta', 'const meta')
   const est = _compartilhado ?? { chamadas: [], logs: [], fases: [], workflows: [], emVoo: 0, maxEmVoo: 0 }
 
@@ -47,11 +47,11 @@ export async function simular(nome, { args, agente, filhos = {}, _compartilhado,
     est.workflows.push({ nome: nomeFilho, args: a })
     if (_nivel >= 1) throw new Error('workflow() dentro de filho: um nível só')
     if (filhos[nomeFilho]) return filhos[nomeFilho](a)
-    return (await simular(nomeFilho, { args: a, agente, filhos, _compartilhado: est, _nivel: 1 })).retorno
+    return (await simular(nomeFilho, { args: a, agente, filhos, budget: orcamento, _compartilhado: est, _nivel: 1 })).retorno
   }
   const phase = (t) => est.fases.push(t)
   const log = (m) => est.logs.push(m)
-  const budget = { total: null, spent: () => 0, remaining: () => Infinity }
+  const budget = orcamento ?? { total: null, spent: () => 0, remaining: () => Infinity }
 
   const fn = new AsyncFunction('args', 'agent', 'parallel', 'pipeline', 'phase', 'log', 'workflow', 'budget', corpo)
   const retorno = await fn(args, agent, parallel, pipeline, phase, log, workflow, budget)

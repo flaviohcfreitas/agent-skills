@@ -139,7 +139,7 @@ for (let volta = 0; ; volta++) {
       `\`{ git diff HEAD -- ${t.arquivos.join(' ')}; for f in $(git ls-files --others --exclude-standard -- ${t.arquivos.join(' ')}); do git diff --no-index /dev/null "$f"; done; }\`. Nunca \`git diff HEAD\` inteiro.\n` +
       `3. Rode a verificação DO TICKET (os testes dos arquivos dele, não a suíte inteira: outros implements podem estar escrevendo) e grave a saída em "$TMPDIR/laco-${t.id}-verificar.txt".\n` +
       '4. Rode a skill code-review sobre esse diff, nos dois eixos (Standards e Spec); bloqueia=true se algum achado impede o merge. Julgue cada critério de pronto com evidência.\n' +
-      `5. Rode \`node ~/.agents/skills/decision-gate/scripts/juiz.mjs --gate --spec-arquivo "$TMPDIR/laco-${t.id}-spec.md" --diff-arquivo "$TMPDIR/laco-${t.id}-diff.txt" --verificar-saida "$TMPDIR/laco-${t.id}-verificar.txt"${ehCritico ? ' --critico' : ''}${imp.construtor ? ` --construtor ${imp.construtor}` : ''}\`.\n` +
+      `5. Rode \`node ~/.agents/skills/decision-gate/scripts/juiz.mjs --gate --spec-arquivo "$TMPDIR/laco-${t.id}-spec.md" --diff-arquivo "$TMPDIR/laco-${t.id}-diff.txt" --verificar-saida "$TMPDIR/laco-${t.id}-verificar.txt"${ehCritico ? ' --critico' : ''}\`.\n` +
       '6. Devolva em jev o EXIT CODE (0 passou · 2 refaz · 3 humano · 1 erro) e o JSON do stdout SEM interpretar (veredito, confianca, critico, probabilidades), mais a linha do stderr em linha. Você não dá veredito próprio: dá a evidência.' +
       (a.spec ? `\n\n--- SPEC DA TAREFA ---\n${typeof a.spec === 'string' ? a.spec : texto(a.spec)}\n--- FIM ---` : ''),
       { label: `monitoring:${t.id}.${volta}`, phase: 'Monitoring', agentType: 'monitoring', schema: MONITORING })

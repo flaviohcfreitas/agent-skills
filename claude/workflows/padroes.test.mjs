@@ -241,3 +241,14 @@ test('install.sh: links por arquivo e idempotente', () => {
   assert.doesNotMatch(a, /simular|padroes\.test/)
   assert.doesNotMatch(rodar(), /workflows/)
 })
+
+// O juiz.mjs só aceita estas flags (argumentos() em decision-gate/scripts/juiz.mjs): flag fora da lista dá exit 1.
+const FLAGS_DO_JUIZ = new Set(['--gate', '--saida', '--comparar', '--seco', '--critico', '--card', '--spec-arquivo', '--diff-arquivo', '--base', '--verificar-saida', '--brief-arquivo', '--saida-arquivo', '--tarefa', '--heuristica', '--modelo', '-h', '--help'])
+test('laço: o comando do juiz no prompt do monitoring só usa flags que o juiz.mjs aceita (sem --construtor)', async () => {
+  const r = await laco({ ticket: TK('T1') })
+  const p = r.chamadas.find((c) => c.opts.agentType === 'monitoring').prompt
+  const cmd = p.match(/juiz\.mjs([^`]*)`/)[1]
+  const flags = cmd.match(/(?:^|\s)(--?[a-z][a-z-]*)/g).map((f) => f.trim())
+  assert.ok(flags.includes('--gate'))
+  for (const f of flags) assert.ok(FLAGS_DO_JUIZ.has(f), `flag desconhecida para o juiz: ${f}`)
+})

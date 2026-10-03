@@ -59,7 +59,7 @@ export const PREFERENCIA = {
   ],
   monitoring: [
     { harness: 'codex', modelo: 'gpt-6-sol', esforco: 'max', provedor: 'openai' },
-    { harness: 'claude', modelo: 'claude-opus-5-5', esforco: 'high', provedor: 'anthropic' },
+    { harness: 'claude', modelo: 'claude-opus-5-5', escalada: 'claude-fable-5-1', esforco: 'high', provedor: 'anthropic' },
     { harness: 'cursor', modelo: 'grok-4.7-high', esforco: null, provedor: 'xai' },
   ],
 }
@@ -135,7 +135,7 @@ export function resolver(papel, o = {}) {
   const permitidos = so.length ? so : instalados
   const excluir = o.excluir ?? []
   const construtor = par(o.construtor)
-  const lista = (p) => PREFERENCIA[p].map((c) => (o.escalada && p === 'reach' && c.escalada ? { ...c, modelo: c.escalada } : c))
+  const lista = (p) => PREFERENCIA[p].map((c) => (o.escalada && (p === 'reach' || p === 'monitoring') && c.escalada ? { ...c, modelo: c.escalada } : c))
 
   const motivo = (c) => {
     if (!permitidos.includes(c.harness)) return so.length && instalados.includes(c.harness) ? 'fora de PAPEIS_SO' : 'ausente'

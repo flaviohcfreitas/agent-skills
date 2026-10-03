@@ -1,0 +1,13 @@
+{
+  "comando": "node .agent-loop/estat/checks/run.mjs",
+  "comando_guarda": "node -e \"process.exit(0)\"",
+  "arquivos": ["src/"],
+  "lista": [
+    "media: soma e divide, e a lista vazia dá 0",
+    "mediana: acha o meio, e a de tamanho par é a média dos dois do meio",
+    "mediana: não altera a lista recebida",
+    "moda: o valor mais frequente, o menor no empate, e null se a lista é vazia",
+    "ligação: src/index.mjs reexporta media, mediana e moda"
+  ],
+  "total": 5
+}
