@@ -159,7 +159,6 @@ quatro papéis:
   | 4 | `Code review` — o diff contra a spec | `code-review` | `Monitoring` | sempre. Se a fatia edita skill ou `CLAUDE.md`, a revisão aplica também a `writing-for-agents` |
   | 4 | `Revisão de UI` — a tela contra o design system | `impeccable` | `Monitoring` | a fatia tem tela |
   | 4 | `E2E` — o spec Cypress do fluxo, rodado no CRM local | `cypress` | `Implement` | fluxo de UI que a `criticidade` marca crítico |
-  | 4 | `Teste de integração` — o Ralph confere o PR de ponta a ponta, pelo webhook | `bot-test` | `Implement`, que envia e comenta o veredito | a fatia toca fluxo entre tela, API e banco |
   | 4 | `Glossário e ADR` — o termo novo ou a decisão difícil de reverter | `domain-modeling` | `Reach` | a fatia cria termo de domínio ou toma decisão sem `Ctrl+Z` |
   | 5 | `Evidências` — o dossiê: cenários, print, checklist, roteiro manual | `evidencias` | `Implement` | há tela ou há check humano |
   | 6 | `Check humano` — seguir o roteiro e decidir | — | o **humano**, pelo nome de membro | fluxo crítico, tela, ou o que não tem `Ctrl+Z`: migration, dado de produção |
